@@ -56,8 +56,8 @@ function turnArchiveIssue(journal,entry){
  return warning?warning.error?.message??warning.message??null:null;
 }
 export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignature=null,storage=null,persistSettings,persistMetadata,persona=()=>'',getHistoryLimit=()=>50,projectToolTurns,getContractorMessages=async()=>[],getDisplayRules=()=>[],nativeSources=null,expand=s=>s,assertIdle=()=>{},onError=()=>{},manualReview=false,request=null,archiveBooks=null,retryBinding=null,requestTransport=null}){
- let storageOwner;storage??={get:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).get(...a),set:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).set(...a),commit:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).commit(...a)};
- let pendingRevision=null,pendingUserRevision=null;let catalogPromise,prepared=null,latest=null,slots={},busy=false,referenceSnapshot=null,narrativeLoreSnapshot=null,warmProjection=null,preparedTurn=null;const listeners=new Set();
+ let storageOwner;storage??={get:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).get(...a),set:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).set(...a),commit:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).commit(...a),stat:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).stat(...a),workspaceToken:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).workspaceToken(...a)};
+ let pendingRevision=null,pendingUserRevision=null;let catalogPromise,prepared=null,latest=null,slots={},busy=false,referenceSnapshot=null,narrativeLoreSnapshot=null,warmProjection=null,preparedTurn=null,peekBatch=null;const listeners=new Set();
  const catalogCacheWarning=error=>{try{onError(Error('表单目录缓存不可用，已使用正式目录：'+error.message));}catch{}};
  const catalog=()=>{if(!catalogPromise){const request=Promise.resolve().then(async()=>{
   const cacheKey='derived:matrix-catalog',signed=typeof catalogSignature==='string'&&/^[a-f0-9]{64}$/.test(catalogSignature);
@@ -83,10 +83,13 @@ export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignat
  const projectMaterials=(bundle,scope,playerBinding)=>{let materials={},materials_error;try{materials=materialProjection(bundle.state,{...scope,playerBinding,narrativeReading:true});}catch(e){materials_error=asError(e);}return {materials,materials_error};};
  const committedResponse=(result,next)=>({...result,bundle:next,preview:true,...projectMaterials(next,next.journal?.scope??next.state.runtime?.scope,config.read().story.userBinding)});
  const notify=(r,id,stamp)=>{
-  latest=r;
+  latest=r;peekBatch=null;
   if(id&&r?.bundle&&typeof stamp==='string'){
    warmProjection={id,revision:r.bundle.local_revision??0,stamp,bundle:r.bundle};preparedTurn=null;
-   if(r.preview!==true){
+   // A restored workspace needs no registration. A full legacy/uncached pass
+   // adopts even an unchanged result once so its new transactional head and
+   // native evidence become a durable /3 workspace; later reopens skip this.
+   if(r.preview!==true&&r.workspaceRestored!==true&&(r.unchanged!==true||typeof storage.stat==='function')){
     const c=ctx(),messages=captureMessages(c),scope=r.bundle.journal?.scope??r.bundle.state.runtime?.scope;
     void finalProjection.adopt(id,{bundle:r.bundle,messages,scope,proof:phoneProof(c),playerBinding:config.read().story.userBinding,manualReview},r);
    }
@@ -99,7 +102,12 @@ export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignat
  const projectFinal=(id,bundle,messages,scope,proof,playerBinding=config.read().story.userBinding)=>finalProjection.project(id,{bundle,messages,scope,proof,playerBinding,manualReview},()=>{
   const result=reconcile(bundle,messages,scope,{...proof,playerBinding});return {...result,...projectMaterials(result.bundle,scope,playerBinding)};
  });
- const controller=new Controller({getContext:ctx,storage,onUpdate:notify,request:async(_path,{bundle,messages,scope})=>{
+ async function restoreFinal(id,c,messages){
+  const value=await finalProjection.restore(id,{messages,proof:phoneProof(c),playerBinding:config.read().story.userBinding,manualReview});
+  if(!value?.bundle?.state?.schema||!value.bundle.state.tables)return null;
+  return {...value,preview:false,unchanged:true,workspaceRestored:true};
+ }
+ const controller=new Controller({getContext:ctx,storage,onUpdate:notify,restore:async({id,messages})=>restoreFinal(id,ctx(),messages),request:async(_path,{bundle,messages,scope})=>{
   const id=ctx().chatMetadata?.[NS]?.chat_uid,proof=phoneProof(ctx());return projectFinal(id,bundle,messages,scope,proof);
  }});
  controller.inject=async()=>{ctx().setExtensionPrompt?.(PROMPT_KEY,'',0,0,false,0);};
@@ -167,7 +175,7 @@ export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignat
   if(!appended||digest(sources.slice(0,-1))!==digest(old)||sources.at(-1).role!=='user')fail('HISTORY_STALE','历史在准备后发生变化');
   captured.reviewHistory=prepareReviewHistory(captured.reviewBundle,sources,captured.key,captured.historyLimit,{recall:captured.recall});
  }
- async function ensureBound(options={}){assertIdle();const result=await controller.ensureBound(async scope=>initializeState(await catalog(),scope),options);if(result.key){options.assertCurrent?.();if(chatKey(ctx())!==result.key||ctx().chatMetadata?.[NS]?.chat_uid!==result.id)fail('CHAT_CHANGED','自动接入后聊天已切换');await archive?.sync();options.assertCurrent?.();}return result;}
+ async function ensureBound(options={}){assertIdle();const result=await controller.ensureBound(async scope=>initializeState(await catalog(),scope),options);if(result.key){options.assertCurrent?.();if(chatKey(ctx())!==result.key||ctx().chatMetadata?.[NS]?.chat_uid!==result.id)fail('CHAT_CHANGED','自动接入后聊天已切换');if(options.syncArchive!==false)await archive?.sync();options.assertCurrent?.();}return result;}
  async function initialize(){assertIdle();const current=await controller.current();if(current)fail('ENGINE_EXISTS','本会话已有引擎状态，请导出备份或继续使用');const c=ctx();await controller.attach({state:initializeState(await catalog(),{session_ref:String(c.chatId),branch_ref:'main'})});await sync();}
  async function present(r){
   if(r?.materials_error)fail('MATERIALS_ERROR','表单已保存，材料读取失败',{error:r.materials_error});slots={...(r?.materials??{}),tisya_preference_texts:JSON.stringify(preferenceTextRows(r?.bundle?.state))};const selected=config.read().story.outputConfigId;if(selected){const row=r?.bundle?.state?.tables?.T_PREF_OUTPUT_CONFIG?.[selected];if(!row)fail('OUTPUT_CONFIGURATION_MISSING','当前输出配置记录已不存在');slots.tisya_output_configuration=JSON.stringify(row.values);}const identities=await identitySlots(ctx(),config.read(),persona(),{state:r?.bundle?.state,revision:r?.bundle?.local_revision??0,contextKey:chatKey(ctx())});slots.tisya_contractor_wish=identities.tisya_contractor_wish?identities.tisya_contractor_wish.replace('[/CONTRACTOR.WISH]',()=>[slots.tisya_contractor_wish,'[/CONTRACTOR.WISH]'].filter(Boolean).join('\n')):slots.tisya_contractor_wish?'[CONTRACTOR.WISH]\n'+slots.tisya_contractor_wish+'\n[/CONTRACTOR.WISH]':'';slots.tisya_user_identity=identities.tisya_user_identity;
@@ -210,10 +218,10 @@ export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignat
   const c=ctx(),key=chatKey(c),meta=c.chatMetadata?.[NS],id=meta?.chat_uid;if(!id||meta.owner_chat_key!==key)return null;
   // Native chat loading mutates a shared array. Retaining that array alone
   // would pair the old owner's bundle with the newly loaded chat's messages.
-  const messages=(c.chat??[]).slice(),bundle=await storage.get(id),assertCurrent=()=>{const live=ctx();
+  const messages=(c.chat??[]).slice(),logical=(c.chat??[]).every(m=>m.extra?.[NS]?.uid)?captureMessages(c):null,restored=logical?await restoreFinal(id,c,logical):null,bundle=restored?.bundle??await storage.get(id),assertCurrent=()=>{const live=ctx();
    if(chatKey(live)!==key||live.chatMetadata!==c.chatMetadata||live.chatMetadata?.[NS]!==meta||meta.chat_uid!==id||meta.owner_chat_key!==key||live.chat!==c.chat||(live.chat??[]).length!==messages.length||messages.some((m,i)=>live.chat[i]!==m))fail('CHAT_CHANGED','读取期间会话或历史已变化，请重试');
   };
-  assertCurrent();if(!bundle)return null;const result=await project(bundle,c,key,meta);assertCurrent();return result;
+  assertCurrent();if(!bundle)return null;if(restored)warmProjection={id,revision:bundle.local_revision??0,stamp:messageListSignature(logical),bundle};const result=await project(bundle,c,key,meta,restored);assertCurrent();return result;
  }
 
  async function listTurnReviews(){
@@ -297,7 +305,15 @@ export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignat
   return reviewAction({...input,action:'modelBackfill',raw});
  }
  async function previewReviewHistory(){return readOwnedDatabase((original,c,key,meta)=>{const messages=captureMessages(c).map((m,i)=>({...m,hidden:!!c.chat[i]?.extra?.[Symbol.for('ignore')]})),bundle=warmReviewBase(original,meta.chat_uid,messages)??reconcile(enableTurnReview(original),messages).bundle;return prepareReviewHistory(bundle,messages,key,historyLimit());});}
- async function peekDatabase(){return readOwnedDatabase((bundle,_c,key)=>({state:clone(bundle.state),revision:bundle.local_revision??0,contextKey:key}));}
+ function clonePeek(view){
+  if(!view)return view;const copy=clone(view);if(view.projectionKey)Object.defineProperty(copy,'projectionKey',{enumerable:false,value:view.projectionKey});return copy;
+ }
+ async function peekDatabase(){
+  const c=ctx(),metadata=c.chatMetadata,chat=c.chat,key=chatKey(c),evidence=JSON.stringify([metadata?.[NS]??null,phoneProof(c),config.read().story.userBinding??null,manualReview]);
+  if(peekBatch&&peekBatch.key===key&&peekBatch.metadata===metadata&&peekBatch.chat===chat&&peekBatch.evidence===evidence)return clonePeek(await peekBatch.promise);
+  const entry={key,metadata,chat,evidence,promise:Promise.resolve().then(()=>readOwnedDatabase((bundle,_c,key)=>({state:clone(bundle.state),revision:bundle.local_revision??0,contextKey:key})))};peekBatch=entry;
+  try{return clonePeek(await entry.promise);}catch(error){if(peekBatch===entry)peekBatch=null;throw error;}
+ }
  // Reconciliation can remove a detached binding from bundle.state. Its saved
  // initialization patch remains evidence that this is not a fresh phone.
  function phoneInitializationEdits(bundle,key,origins){
@@ -311,12 +327,17 @@ export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignat
   const current=projection?.bundle??bundle,key=proof.contextKey,allowedOriginContextKeys=proof.allowedOriginContextKeys;
   const seenOrigins=new Set(),hasPhone=!!current.state.tables?.X_PHONE_BINDINGS?.['phone-current'];
   const phoneInitializationSources=phoneInitializationEdits(bundle,key,allowedOriginContextKeys).flatMap(edit=>{const messageUid=edit.after_uid??edit.anchor_chain?.at(-1)?.uid;if(!messageUid||seenOrigins.has(messageUid))return [];seenOrigins.add(messageUid);return [{messageUid,index:(messages??[]).findIndex(m=>m.uid===messageUid),...(!hasPhone?phoneOriginStatus(edit,messages):{})}];});
-  return {state:clone(current.state),revision:bundle.local_revision??0,contextKey:key,allowedOriginContextKeys,phoneDetached:!current.state.tables?.X_PHONE_BINDINGS?.['phone-current']&&(!!bundle.state.tables?.X_PHONE_BINDINGS?.['phone-current']||phoneInitializationEdits(bundle,key,allowedOriginContextKeys).length>0),phoneBootstrapHydration:clone(projection?.phone_bootstrap_hydration??[]),phoneInitializationSources,phoneActionReservations:clone(bundle.phone_action_reservations??{})};
+  const view={state:clone(current.state),revision:bundle.local_revision??0,contextKey:key,allowedOriginContextKeys,phoneDetached:!current.state.tables?.X_PHONE_BINDINGS?.['phone-current']&&(!!bundle.state.tables?.X_PHONE_BINDINGS?.['phone-current']||phoneInitializationEdits(bundle,key,allowedOriginContextKeys).length>0),phoneBootstrapHydration:clone(projection?.phone_bootstrap_hydration??[]),phoneInitializationSources,phoneActionReservations:clone(bundle.phone_action_reservations??{})};
+  // The phone adapter may reuse its decoded archive only for this exact
+  // projection. A deleted/edited message can change the derived state before
+  // the authoritative revision advances, so revision alone is not sufficient.
+  if(projection&&messages)Object.defineProperty(view,'projectionKey',{enumerable:false,value:JSON.stringify([view.revision,messages,proof])});
+  return view;
  }
  const databaseProjection=snapshotProjection((bundle,messages,proof)=>databaseView(bundle,messages,proof,messages?bundleProjection(bundle,messages,undefined,proof):null));
- async function readDatabase(){return readOwnedDatabase(async(bundle,c,key,meta)=>{
+ async function readDatabase(){return readOwnedDatabase(async(bundle,c,key,meta,restored)=>{
   const messages=(c.chat??[]).every(m=>m.extra?.[NS]?.uid)?captureMessages(c):null,proof=phoneProof(c);if(!messages)return databaseProjection(bundle,null,proof);
-  const projected=await projectFinal(meta.chat_uid,bundle,messages,bundle.journal?.scope??bundle.state.runtime?.scope,proof);return databaseView(bundle,messages,proof,projected);
+  const projected=restored??await projectFinal(meta.chat_uid,bundle,messages,bundle.journal?.scope??bundle.state.runtime?.scope,proof);return databaseView(bundle,messages,proof,projected);
  });}
 
  async function readDatabaseSnapshot(input){return readOwnedDatabase((bundle,_c,key)=>databaseSnapshotAtMessage(bundle,input,key));}

@@ -117,10 +117,16 @@ export function createExtensionPresentationService({document=globalThis.document
  const currentKey=()=>chatKey(getContext());
  const assertKey=key=>{if(currentKey()!==key)fail('CONTEXT_CHANGED','读取历史记录期间会话已切换');};
  const automaticMemory=new WeakMap();let peekBatch=null;
+ // A restored workspace is shared by every message in the same render pass.
+ // Do not read and clone it once per reply. Native evidence still invalidates
+ // in-place edits/deletions, while the host subscription invalidates a genuine
+ // authoritative commit even when the visible messages stayed identical.
+ database?.subscribe?.(()=>{peekBatch=null;});
  async function currentRevision(key){
-  if(!database?.peek)return null;const metadata=getContext().chatMetadata;
-  if(peekBatch&&peekBatch.key===key&&peekBatch.metadata===metadata)return peekBatch.promise;
-  const entry={key,metadata,promise:Promise.resolve().then(()=>database.peek())};peekBatch=entry;queueMicrotask(()=>{if(peekBatch===entry)peekBatch=null;});
+  if(!database?.peek)return null;const c=getContext(),metadata=c.chatMetadata,chat=c.chat;
+  const evidence=JSON.stringify([metadata?.tisya_engine??null,metadata?.main_chat??null,metadata?.integrity??null,(chat??[]).map(m=>[m.mes,m.is_user,m.is_system,m.swipe_id,m.swipes,m.extra?.tisya_engine,m.swipe_info?.map(info=>info?.extra?.tisya_engine),m.tt_swipe_cold]),getScope()]);
+  if(peekBatch&&peekBatch.key===key&&peekBatch.metadata===metadata&&peekBatch.chat===chat&&peekBatch.evidence===evidence)return peekBatch.promise;
+  const entry={key,metadata,chat,evidence,promise:Promise.resolve().then(()=>database.peek())};peekBatch=entry;
   try{return await entry.promise;}catch(error){if(peekBatch===entry)peekBatch=null;throw error;}
  }
  async function forMessage(message){

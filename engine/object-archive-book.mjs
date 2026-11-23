@@ -28,8 +28,8 @@ function materialize(data,decoded,desired,kind){
  }
  return next;
 }
-async function writeOne(books,ref,owner,kind,desired){
- const names=await books.listBooks(),exists=names.includes(ref.name),data=exists?await books.readBook(ref.name):{entries:{}},decoded=decodeBook(data,owner,kind),next=materialize(data,decoded,desired,kind);
+async function writeOne(books,ref,owner,kind,desired,snapshot){
+ const names=snapshot?.names??await books.listBooks(),exists=names.includes(ref.name),data=snapshot?.data??(exists?await books.readBook(ref.name):{entries:{}}),decoded=snapshot?.decoded??decodeBook(data,owner,kind),next=materialize(data,decoded,desired,kind);
  if(digest(next)===digest(data))return;
  if(exists)check(digest(await books.readBook(ref.name))===digest(data),'OBJECT_ARCHIVE_CONFLICT','保存前对象存档被其他页面修改，请重试');
  else check(!(await books.listBooks()).includes(ref.name),'OBJECT_ARCHIVE_CONFLICT','创建前出现同名对象存档，请重试');
@@ -39,12 +39,12 @@ async function writeOne(books,ref,owner,kind,desired){
 
 // The two products are idempotent projections. The caller writes the complete
 // recovery checkpoint last, so a partial failure never replaces live state.
-export async function syncObjectArchiveBooks({books,owner,bundle,dossierRef,historyRef}){
- const names=await books.listBooks(),read=async ref=>names.includes(ref.name)?await books.readBook(ref.name):{entries:{}};
+export async function syncObjectArchiveBooks({books,owner,bundle,dossierRef,historyRef,bookNames=null}){
+ const names=bookNames??await books.listBooks(),read=async ref=>names.includes(ref.name)?await books.readBook(ref.name):{entries:{}};
  const [dossierData,historyData]=await Promise.all([read(dossierRef),read(historyRef)]),dossierRows=decodeBook(dossierData,owner,'dossier'),historyRows=decodeBook(historyData,owner,'history');
  const projected=advanceObjectArchive(bundle,{dossiers:dossierRows.filter(x=>x.value.kind==='dossier').map(x=>x.value),histories:historyRows.filter(x=>x.value.kind==='history').map(x=>x.value)});
  for(const row of [...dossierRows,...historyRows])check(row.value.observed_revision<=projected.revision,'OBJECT_ARCHIVE_NEWER','对象存档版本较新，未用本机旧数据覆盖');
  const dossierOwner={...dossierRef},historyOwner={...historyRef},dossiers=[indexFor('dossier',projected,owner),...projected.dossiers.map(x=>withOwner(x,owner))],histories=[indexFor('history',projected,owner),...projected.histories.map(x=>withOwner(x,owner)),withOwner(projected.events,owner)];
- await writeOne(books,dossierOwner,owner,'dossier',dossiers);await writeOne(books,historyOwner,owner,'history',histories);
+ await Promise.all([writeOne(books,dossierOwner,owner,'dossier',dossiers,{names,data:dossierData,decoded:dossierRows}),writeOne(books,historyOwner,owner,'history',histories,{names,data:historyData,decoded:historyRows})]);
  return {revision:projected.revision,time:clone(projected.time),objects:projected.dossiers.length,historyObjects:projected.histories.length,events:projected.events.events.length};
 }

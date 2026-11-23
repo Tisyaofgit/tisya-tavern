@@ -44,6 +44,13 @@ async function fixture(){
  return {host,context,select,disk,getPhoneService,phoneServices,pausePeek,ui,openVirtualPhone,a,writes:()=>writes,saves:()=>saves};
 }
 
+test('queued reconciliation can skip only the eager cached-service refresh',async()=>{
+ const f=await fixture();let refreshes=0;const refresh=f.a.refresh;f.a.refresh=(...args)=>{refreshes++;return refresh(...args);};
+ assert.equal(await f.getPhoneService(f.context(),{refresh:false}),f.a);assert.equal(refreshes,0);
+ assert.equal(await f.getPhoneService(f.context()),f.a);assert.equal(refreshes,1);
+ f.select('B');await f.host.ensureDatabase();const b=await f.getPhoneService(f.context(),{refresh:false});assert.notEqual(b,f.a);assert.equal(b.getState().contextKey,chatKey(f.context()));
+});
+
 test('entry cache rejects A after completed peek is delayed until navigation to B',async()=>{
  const f=await fixture(),before=clone([...f.disk]),wait=f.pausePeek();const old=f.getPhoneService();await wait.begun;
  f.select('B');wait.release();await assert.rejects(old,changed);

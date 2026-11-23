@@ -63,3 +63,12 @@ test('a dossier-only partial write rebuilds the missing history on retry',async(
  fail=false;await f.sync(bundle(2,6,person('阿青',10,'好胜','剑术')));
  const history=Object.values(f.files.get('历史书').entries).map(x=>JSON.parse(x.content)).find(x=>x.kind==='history');assert.equal(history.changes.length,1);assert(history.changes[0].fields.some(x=>x.field==='likes'&&x.after.value==='剑术'));
 });
+
+
+test('changed revisions share the initial book snapshot without skipping conflict or verification reads',async()=>{
+ const f=bookFixture();await f.sync(bundle());const calls=[],list=f.books.listBooks,read=f.books.readBook;
+ f.books.listBooks=async()=>{calls.push('list');return list();};f.books.readBook=async name=>{calls.push('read:'+name);return read(name);};
+ await f.sync(bundle(2,6,person('阿青',10,'好胜','剑术')));
+ assert.equal(calls.filter(x=>x==='list').length,1);assert.equal(calls.filter(x=>x.startsWith('read:')).length,6);
+ assert.equal(calls.filter(x=>x==='read:档案书').length,3);assert.equal(calls.filter(x=>x==='read:历史书').length,3);
+});

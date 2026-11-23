@@ -9,9 +9,10 @@ const clone=structuredClone;
 const catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url)));
 
 async function fixture({manualReview=false,nativeSources=null}={}){
- const disk=new Map(),macros=new Map();
+ const disk=new Map(),heads=new Map(),macros=new Map();let token=0;
  const ctx={chatId:'registration-next-turn',characterId:0,extensionSettings:{},chatMetadata:{},chat:[],saveChat:async()=>true,saveSettingsDebounced(){},registerMacro:(key,fn)=>macros.set(key,fn)};
- const storage={get:async key=>clone(disk.get(key)),set:async(key,value)=>disk.set(key,clone(value)),commit:async(key,revision,value)=>{if((disk.get(key)?.local_revision??0)!==revision)return false;disk.set(key,clone(value));return true;}};
+ const saveHead=(key,value)=>{if(value?.state?.schema&&value?.state?.tables)heads.set(key,{format:'tisya.workspace-head/1',owner:key,revision:value.local_revision??0,token:'head-'+(++token)});};
+ const storage={get:async key=>clone(disk.get(key)),stat:async key=>clone(heads.get(key)),set:async(key,value)=>{disk.set(key,clone(value));saveHead(key,value);},commit:async(key,revision,value)=>{const current=disk.get(key);if((current?.local_revision??0)!==revision)return false;if((value.local_revision??0)===revision){if(JSON.stringify(current)!==JSON.stringify(value))return false;if(!heads.has(key))saveHead(key,value);}else{disk.set(key,clone(value));saveHead(key,value);}return true;}};
  const source={prompts:clone(baseline.prompts),order:clone(baseline.prompt_order[1].order)};
  const expand=text=>text.replace(/\{\{([^{}]+)\}\}/g,(match,key)=>macros.get(key)?.()??(key==='user'?'user':key==='char'?'char':match));
  const options={getContext:()=>ctx,getSource:()=>source,loadCatalog:async()=>catalog,storage,persistSettings:async()=>true,persistMetadata:async()=>true,expand,manualReview,nativeSources};
@@ -52,6 +53,14 @@ test('a cold read-only database and archive opening reuse the persisted final pr
  const f=await fixture();f.ctx.chat.push({is_user:true,mes:'登记阿青'},{is_user:false,mes:'已登记。'});await f.host.sync();await f.host.flushProjectionCache();
  const coldHost=createMatrixHost(f.options),actual=await coldHost.readDatabase(),expected=await f.host.readDatabase();
  assert.deepEqual(actual,expected);assert.equal(coldHost.projectionCacheReport().diskHits,1);assert.equal(coldHost.projectionCacheReport().misses,0);
+});
+
+test('an unchanged cold reopen does not hash and persist the same final projection twice',async()=>{
+ const f=await fixture();f.ctx.chat.push({is_user:true,mes:'登记阿青'},{is_user:false,mes:'已登记。'});await f.host.sync();await f.host.flushProjectionCache();
+ const coldHost=createMatrixHost(f.options),writes=[],set=f.options.storage.set,get=f.options.storage.get,commit=f.options.storage.commit,id=f.ctx.chatMetadata.tisya_engine.chat_uid;let authoritativeReads=0,commits=0;
+ f.options.storage.set=async(key,value)=>{if(key.startsWith('derived:final-projection:'))writes.push(key);return set(key,value);};f.options.storage.get=async key=>{if(key===id)authoritativeReads++;return get(key);};f.options.storage.commit=async(...args)=>{commits++;return commit(...args);};
+ await coldHost.event('CHAT_CHANGED');await coldHost.flushProjectionCache();assert.equal(coldHost.latest().unchanged,true);assert.equal(coldHost.latest().workspaceRestored,true);assert.equal(coldHost.projectionCacheReport().diskHits,1);assert.equal(coldHost.projectionCacheReport().workspaceHits,1);assert.equal(authoritativeReads,0);assert.equal(commits,0);assert.equal(writes.length,0);
+ f.ctx.chat[1].mes+='真实变化';await coldHost.event('MESSAGE_EDITED',1);await coldHost.flushProjectionCache();assert(writes.length>0,'a real change must persist its newly committed projection');assert.notEqual(coldHost.latest().unchanged,true);assert.notEqual(coldHost.latest().workspaceRestored,true);
 });
 
 test('a direct database transaction also adopts its committed projection for the first cold read',async()=>{

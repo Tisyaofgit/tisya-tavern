@@ -91,6 +91,17 @@ test('startup selects once; repeated ready does not undo manual disable, reopeni
  f.switch('b');await activation.chatChanged();f.switch(a);await activation.chatChanged();assert.equal(a.chatMetadata[NS].enabled,true);assert.equal(selections(),1);
 });
 
+test('generation after chat-only activation rejects manual disable before an archive upgrade reopens it',async()=>{
+ const f=fixture(),calls=[],activation=createDefaultActivation({getContext:()=>f.ctx,activatePreset:async()=>({active:true}),ensureBound:options=>{calls.push(options.syncArchive);return f.controller.ensureBound(f.createState,options);}});
+ await activation.chatChanged({syncArchive:false});f.ctx.chatMetadata[NS].enabled=false;const before={counts:f.counts(),metadata:f.savedMetadata.length};
+ await assert.rejects(activation.ready(),e=>e.code==='ENGINE_DISABLED');assert.equal(f.ctx.chatMetadata[NS].enabled,false);assert.deepEqual(calls,[false]);assert.deepEqual(f.counts(),before.counts);assert.equal(f.savedMetadata.length,before.metadata);
+});
+
+test('a chat-only archive deferral cannot satisfy a later independent archive check',async()=>{
+ const f=fixture(),calls=[],activation=createDefaultActivation({getContext:()=>f.ctx,activatePreset:async()=>({active:true}),ensureBound:options=>{calls.push(options.syncArchive);return f.controller.ensureBound(f.createState,options);}});
+ await activation.chatChanged({syncArchive:false});assert.deepEqual(calls,[false]);await activation.ready();assert.deepEqual(calls,[false,true]);await activation.chatChanged({syncArchive:false});assert.deepEqual(calls,[false,true]);
+});
+
 test('a delayed first-chat failure does not poison later chat activation',async()=>{
  const f=fixture(),a=f.ctx,gate=deferred();let calls=0;const {activation}=activated(f,{createState:async scope=>{if(++calls===1)await gate.promise;return f.createState(scope);}});
  const first=activation.start();first.catch(()=>{});await new Promise(r=>setImmediate(r));const b=f.switch('b');const next=activation.chatChanged();gate.resolve();

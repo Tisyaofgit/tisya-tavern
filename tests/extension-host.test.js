@@ -87,17 +87,28 @@ test('actual old news and live documents map their real text and author/seconds 
  const phone=createPhoneState({accounts:{...communicationAccounts,...publicAccounts,...mediaAccounts},documents:[...communicationDocuments,...publicDocuments,...mediaDocuments]},'ctx'),snapshot={frame:{sourceId:'source'},suite:phone.suite},requests=[['news-audio','news'],['live-encore','danmaku']].map(([id,kind])=>({kind,reference:{...phoneDatabaseReference(['suite','documents',id],{root:phone}),snapshotId:'source'}})),result=phonePresentationProjections(snapshot,{sourceId:'source',contextKey:'ctx',requests});
  assert.equal(result.length,2);assert.ok(result.find(r=>r.kind==='news').value.paragraphs.length);const live=result.find(r=>r.kind==='danmaku');assert.equal(live.value.items[0].atSeconds,0);assert.ok(live.value.items[0].author);assert.match(live.value.title,/演示素材/);
 });
+test('sequential message rendering shares one workspace peek until evidence or revision changes',async()=>{
+ const s=setup(),listeners=new Set();let peeks=0;s.ctx.chat=[s.message];s.ctx.chatMetadata={integrity:'chat-proof'};
+ const raw=fixture({body:'阿青回到了渡口。'});s.message.mes=raw;s.bundle.journal.entries[0].signature=digest({uid:'uid-one',role:'assistant',text:raw});
+ const service=createExtensionPresentationService({document:s.w.document,getContext:()=>s.ctx,phone:{source:phoneSource,snapshot:async()=>null},database:{peek:async()=>{peeks++;return {state:s.state,revision:1,contextKey:chatKey(s.ctx)};},snapshot:input=>databaseSnapshotAtMessage(s.bundle,input,chatKey(s.ctx)),subscribe:fn=>listeners.add(fn)}});
+ try{
+  await service.forMessage(s.message);await service.forMessage(s.message);assert.equal(peeks,1,'sequential replies must not each clone the full workspace');
+  s.message.mes=fixture({body:'同一条消息已被原地编辑。'});await service.forMessage(s.message);assert.equal(peeks,2,'in-place native evidence must invalidate the shared read');
+  for(const notify of listeners)notify();await service.forMessage(s.message);assert.equal(peeks,3,'an authoritative revision notice must invalidate unchanged visible evidence');
+ }finally{await s.w.happyDOM.abort();}
+});
+
 test('automatic archive links survive a cold service, invalidate by revision and clear on demand',async()=>{
- const s=setup(),cache=startReaderCache({indexedDB:new IDBFactory(),crypto:webcrypto});let snapshots=0,revision=7;
+ const s=setup(),cache=startReaderCache({indexedDB:new IDBFactory(),crypto:webcrypto}),listeners=new Set();let snapshots=0,revision=7;
  try{
   const raw=fixture({body:'阿青回到了渡口。'});s.message.mes=raw;s.message.send_date='fixed';s.message.name='角色';s.bundle.journal.entries[0].signature=digest({uid:'uid-one',role:'assistant',text:raw});
   s.state.schema={T_SYS_ENTITIES:{id:'T_SYS_ENTITIES',label:'对象',fields:[{key:'name',type:'TEXT'},{key:'kind',type:'TEXT'},{key:'description',type:'LONG_TEXT'}]}};
   s.state.tables.T_SYS_ENTITIES={aqing:row({name:'阿青',kind:'character',description:'当时的简介'})};
-  const database={peek:async()=>({state:s.state,revision,contextKey:chatKey(s.ctx)}),snapshot:input=>{snapshots++;return databaseSnapshotAtMessage(s.bundle,input,chatKey(s.ctx));},read:()=>{throw Error('historical rendering must not read current');}};
+  const database={peek:async()=>({state:s.state,revision,contextKey:chatKey(s.ctx)}),snapshot:input=>{snapshots++;return databaseSnapshotAtMessage(s.bundle,input,chatKey(s.ctx));},subscribe:fn=>{listeners.add(fn);return()=>listeners.delete(fn);},read:()=>{throw Error('historical rendering must not read current');}};
   const make=()=>createExtensionPresentationService({document:s.w.document,getContext:()=>s.ctx,phone:{source:phoneSource,snapshot:async()=>null},database,getScope:()=>({ownerId:'owner-1',worldId:'world-1'})});
   const hot=await make().forMessage(s.message);assert.equal(hot.archiveLinks.entries[0].title,'阿青');assert.equal(snapshots,1);await cache.flush();
   const cold=await make().forMessage(s.message);assert.equal(cold.archiveLinks.entries[0].title,'阿青');assert.equal(snapshots,1,'cold service must reuse the persisted link index without replaying the snapshot');
-  revision=8;const changed=await make().forMessage(s.message);assert.equal(changed.archiveLinks.entries[0].title,'阿青');assert.equal(snapshots,2,'a new authoritative revision must be verified again');
+  revision=8;for(const notify of listeners)notify();const changed=await make().forMessage(s.message);assert.equal(changed.archiveLinks.entries[0].title,'阿青');assert.equal(snapshots,2,'a new authoritative revision must be verified again');
   await clearReaderCache();const cleared=await make().forMessage(s.message);assert.equal(cleared.archiveLinks.entries[0].title,'阿青');assert.equal(snapshots,3,'cleared derived data must not be treated as current');
  }finally{await cache.dispose();await s.w.happyDOM.abort();}
 });

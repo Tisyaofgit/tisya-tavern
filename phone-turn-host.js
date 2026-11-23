@@ -37,12 +37,12 @@ function selectedPhoneSources(c,state){
 
 export function createPhoneTurnHost({getContext,persistMetadata,phoneService,isGenerating=()=>null,onChange=()=>{},onError=()=>{}}){
  let active=null,alive=true,epoch=0,reconcileTail=Promise.resolve();
- const service=async c=>{need(alive,'PHONE_DISPOSED','手机入口已经关闭。');return typeof phoneService==='function'?await phoneService(c??getContext()):phoneService;};
+ const service=async(c,options)=>{need(alive,'PHONE_DISPOSED','手机入口已经关闭。');return typeof phoneService==='function'?await phoneService(c??getContext(),options):phoneService;};
  function valid(run){need(alive&&active===run&&run.epoch===epoch&&matches(getContext(),run.scope),'PHONE_CONTEXT_CHANGED','手机本轮所属聊天已变化，未使用过期请求。');}
  async function identities(c){if(ensureMessages(c)){need(typeof c.saveChat==='function','PHONE_MESSAGE_SAVE','宿主缺少消息身份保存接口。');need(await c.saveChat()!==false,'PHONE_MESSAGE_SAVE','宿主没有确认消息身份保存。');}}
  const selectedSources=(c,svc)=>selectedPhoneSources(c,svc.getState());
  async function synchronize(){
-  const c=getContext(),s=scope(c),svc=await service(c);if(!svc)return null;
+  const c=getContext(),s=scope(c),svc=await service(c,{refresh:false,requireExisting:true});if(!svc)return null;
   need(matches(getContext(),s),'PHONE_CONTEXT_CHANGED','聊天在读取手机历史时已切换。');
   await identities(c);need(matches(getContext(),s),'PHONE_CONTEXT_CHANGED','聊天在读取手机历史时已切换。');
   const sources=selectedSources(c,svc),stamp=JSON.stringify(sources),result=await svc.reconcile({chatKey:s.key,sources});

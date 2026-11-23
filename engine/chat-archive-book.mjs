@@ -1,4 +1,4 @@
-import {clone,digest,fail} from './common.mjs';
+import {clone,digestAsync,sha256Async,fail} from './common.mjs';
 import {chatKey,NS} from './controller.mjs';
 import {syncObjectArchiveBooks} from './object-archive-book.mjs';
 
@@ -25,12 +25,18 @@ export function createChatArchiveStorage({storage,books,getContext}){
   guard();try{await c.saveMetadata();guard();}catch(error){for(const [slot]of specs){if(prior[slot]===undefined)delete meta[slot];else if(meta[slot]===refs[slot])meta[slot]=prior[slot];}throw error;}
   return refs;
  }
- function decode(data,owner){
+ async function decode(data,owner){
   const rows=Object.values(data?.entries??{}).filter(e=>e.extensions?.[MARKER]===FORMAT);
   check(rows.length===1,'ARCHIVE_BOOK_INVALID','存档书的完整存档条目缺失或重复，原书已保留');
   const row=rows[0];let value;try{value=JSON.parse(row.content);}catch{fail('ARCHIVE_BOOK_INVALID','存档书内容无法解析，原书已保留');}
   check(value.format===FORMAT&&value.chat_uid===owner.id&&value.owner_chat_key===owner.key,'ARCHIVE_BOOK_OWNER','存档书属于另一聊天，未覆盖');
-  check(row.disable===true&&value.bundle?.state?.schema&&value.bundle?.state?.tables&&Number.isSafeInteger(value.revision)&&value.revision===(value.bundle.local_revision??0)&&value.hash===digest(value.bundle),'ARCHIVE_BOOK_INVALID','存档书内容或校验不一致，原书已保留');
+  check(row.disable===true&&value.bundle?.state?.schema&&value.bundle?.state?.tables&&Number.isSafeInteger(value.revision)&&value.revision===(value.bundle.local_revision??0),'ARCHIVE_BOOK_INVALID','存档书内容或校验不一致，原书已保留');
+  check(value.hash_algorithm===undefined||value.hash_algorithm==='json-sha256','ARCHIVE_BOOK_INVALID','存档书哈希格式无法识别，原书已保留');
+  // The embedded bundle is immutable JSON text, not a cross-document canonical
+  // identity. Hash its preserved byte order; older canonical checkpoints retain
+  // their original verification path until the next ordinary checkpoint write.
+  const actualHash=value.hash_algorithm==='json-sha256'?await sha256Async(JSON.stringify(value.bundle)):await digestAsync(value.bundle);
+  check(value.hash===actualHash,'ARCHIVE_BOOK_INVALID','存档书内容或校验不一致，原书已保留');
   return {row,value};
  }
  function sync(id){
@@ -46,20 +52,22 @@ export function createChatArchiveStorage({storage,books,getContext}){
     // dossier and event. Validate the persisted checkpoint before doing any
     // object-archive work; only an actual revision/content change can continue.
     const names=await books.listBooks();const exists=names.includes(name),data=exists?await books.readBook(name):{entries:{}};
-    const current=exists?decode(data,owner):null,hash=digest(bundle),value={format:FORMAT,chat_uid:id,owner_chat_key:owner.key,revision,hash,bundle};
+    // These three digests authenticate independent inputs. Run them together,
+    // then retain the same conflict, replacement and read-back checks below.
+    const [dataHash,current,hash]=await Promise.all([digestAsync(data),exists?decode(data,owner):Promise.resolve(null),sha256Async(JSON.stringify(bundle))]),value={format:FORMAT,chat_uid:id,owner_chat_key:owner.key,revision,hash_algorithm:'json-sha256',hash,bundle};
     if(current){
      check(current.value.revision<=revision,'ARCHIVE_BOOK_NEWER','存档书版本较新，未用本机旧数据覆盖');
-     if(current.value.revision===revision){check(current.value.hash===hash,'ARCHIVE_BOOK_CONFLICT','同一版本的本地存档与存档书不同，已保留双方');reports.set(id,{status:'saved',name,dossier_name:dossierName,history_name:historyName,revision,reused:true});return clone(reports.get(id));}
+     if(current.value.revision===revision){const currentHash=current.value.hash_algorithm==='json-sha256'?hash:await digestAsync(bundle);check(current.value.hash===currentHash,'ARCHIVE_BOOK_CONFLICT','同一版本的本地存档与存档书不同，已保留双方');reports.set(id,{status:'saved',name,dossier_name:dossierName,history_name:historyName,revision,reused:true});return clone(reports.get(id));}
     }
     reports.set(id,{status:'saving',name,dossier_name:dossierName,history_name:historyName,revision});
-    const objects=await syncObjectArchiveBooks({books,owner,bundle,dossierRef:refs.dossier_book,historyRef:refs.history_book});
+    const objects=await syncObjectArchiveBooks({books,owner,bundle,dossierRef:refs.dossier_book,historyRef:refs.history_book,bookNames:names});
     // Recheck the concrete file immediately before replacing it; preserve all
     // user entries and native book metadata outside our single owned entry.
-    if(exists)check(digest(await books.readBook(name))===digest(data),'ARCHIVE_BOOK_CONFLICT','保存前存档书被其他页面修改，请重试');
+    if(exists)check(await digestAsync(await books.readBook(name))===dataHash,'ARCHIVE_BOOK_CONFLICT','保存前存档书被其他页面修改，请重试');
     else check(!(await books.listBooks()).includes(name),'ARCHIVE_BOOK_CONFLICT','创建前出现同名存档书，请重试');
     const next=clone(data),row=current?.row??entry('');next.entries[row.uid]={...row,content:JSON.stringify(value)};
     await books.writeBook(name,next);
-    const verified=decode(await books.readBook(name),owner);
+    const verified=await decode(await books.readBook(name),owner);
     check(verified.value.revision===revision&&verified.value.hash===value.hash,'ARCHIVE_BOOK_UNCONFIRMED','存档书写入后回读不一致，请重试同步');
     reports.set(id,{status:'saved',name,dossier_name:dossierName,history_name:historyName,revision,objects:objects.objects,events:objects.events});return clone(reports.get(id));
    }catch(error){
@@ -68,7 +76,7 @@ export function createChatArchiveStorage({storage,books,getContext}){
    }
   }).finally(()=>{if(jobs.get(id)===job)jobs.delete(id);});jobs.set(id,job);return job;
  }
- const wrapped={get:(...args)=>storage.get(...args),async set(id,value){capture(id);await storage.set(id,value);if(!id.includes(':backup:'))await sync(id);},async commit(id,revision,value){capture(id);const saved=await storage.commit(id,revision,value);if(saved)await sync(id);return saved;}};
+ const wrapped={get:(...args)=>storage.get(...args),...(storage.stat?{stat:(...args)=>storage.stat(...args)}:{}),...(storage.workspaceToken?{workspaceToken:(...args)=>storage.workspaceToken(...args)}:{}),async set(id,value){capture(id);await storage.set(id,value);if(!id.includes(':backup:'))await sync(id);},async commit(id,revision,value){capture(id);const saved=await storage.commit(id,revision,value);if(saved)await sync(id);return saved;}};
  return {storage:wrapped,sync:()=>{const id=getContext().chatMetadata?.[NS]?.chat_uid;return id?sync(id):Promise.resolve(null);},status(){const c=getContext(),meta=c.chatMetadata?.[NS];if(!meta||meta.owner_chat_key!==chatKey(c))return null;return clone(reports.get(meta.chat_uid)??{status:'pending',name:meta.archive_book?.chat_uid===meta.chat_uid?meta.archive_book.name:null});}};
 }
 

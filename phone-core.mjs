@@ -467,18 +467,18 @@ export function attachPhoneDatabaseSnapshot(input,{revision=0}={}){
 
 export function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=()=>new Date().toISOString(),idFactory=()=>globalThis.crypto.randomUUID()}={}){
   if(!storage||typeof storage.load!=='function'||typeof storage.save!=='function')fail('PHONE_STORAGE','缺少手机存储接口');
-  let state=null,chain=Promise.resolve(),disposed=false;
+  let state=null,loadedValue=null,chain=Promise.resolve(),disposed=false;
   const assert=()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');if(!state)fail('PHONE_NOT_READY','手机尚未初始化');};
-  const enqueue=(fn,assertCurrent)=>{const p=chain.then(async()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');assertCurrent?.();if(state&&storage.authoritativeDatabase){const fresh=await storage.load();assertCurrent?.();if(!fresh)fail('PHONE_DATABASE_DETACHED','当前历史已离开手机初始化分支，未把旧手机数据写回当前历史；请恢复原历史后继续');state=importPhone(fresh,{contextKey});}return fn();});chain=p.catch(()=>{});return p;};
+  const enqueue=(fn,assertCurrent)=>{const p=chain.then(async()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');assertCurrent?.();if(state&&storage.authoritativeDatabase){const fresh=await storage.load();assertCurrent?.();if(!fresh)fail('PHONE_DATABASE_DETACHED','当前历史已离开手机初始化分支，未把旧手机数据写回当前历史；请恢复原历史后继续');if(fresh!==loadedValue){state=importPhone(fresh,{contextKey});loadedValue=fresh;}}return fn();});chain=p.catch(()=>{});return p;};
   async function commit(next,kind='state',assertCurrent){
     assert();if(next===state)return state;
     const previous=state.revision;next.revision=previous+1;scoped(next,contextKey);
     assertCurrent?.();const archive=JSON.parse(exportPhone(next)),saved=await storage.save(archive,{expectedRevision:previous,kind,...(assertCurrent?{assertCurrent}:{})});
     try{assertCurrent?.();}catch(error){error.phoneCommitReceipt={contextKey,revision:saved?.phoneArchive?.revision??next.revision,kind};throw error;}
-    if(disposed)fail('PHONE_DISPOSED','保存结束时手机实例已关闭；未更新其他上下文');state=saved?.phoneArchive?importPhone(saved.phoneArchive,{contextKey}):next;onChange({kind,revision:state.revision});return state;
+    if(disposed)fail('PHONE_DISPOSED','保存结束时手机实例已关闭；未更新其他上下文');loadedValue=saved?.phoneArchive??null;state=loadedValue?importPhone(loadedValue,{contextKey}):next;onChange({kind,revision:state.revision});return state;
   }
   const api={
-    async init(){return enqueue(async()=>{if(state)return api;const value=await storage.load();if(value==null){const initial=createPhoneState(seed,contextKey);await storage.save(JSON.parse(exportPhone(initial)),{expectedRevision:null});state=initial;}else state=importPhone(value,{contextKey});onChange({kind:'init',revision:state.revision});return api;});},
+    async init(){return enqueue(async()=>{if(state)return api;const value=await storage.load();if(value==null){const initial=createPhoneState(seed,contextKey);await storage.save(JSON.parse(exportPhone(initial)),{expectedRevision:null});state=initial;loadedValue=null;}else{loadedValue=value;state=importPhone(value,{contextKey});}onChange({kind:'init',revision:state.revision});return api;});},
     async refresh(){return enqueue(async()=>clone(state));},
     getState(){assert();return clone(state);},
     readLife(){assert();return state.life?clone(state.life):null;},

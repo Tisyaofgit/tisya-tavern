@@ -181,11 +181,13 @@ async function mandatoryPresetSource(){if(!requiredPreset){const response=await 
 const textTransport=createTextTransport({target:window});
 const phoneServices=new Map();let phoneSeedPromise=null;
 const phoneChanged=()=>{window.dispatchEvent(new CustomEvent('tisya:phone-change'));queueMicrotask(()=>{appearance?.refresh();pet?.refresh();});};
-async function getPhoneService(c=context()){
+async function getPhoneService(c=context(),{refresh=true,requireExisting=false}={}){
  const key=phoneChatKey(c),metadata=c.chatMetadata,chat=c.chat;if(!key)throw Error('请先打开聊天，再使用手机。');
  const assertCurrent=()=>{const live=context();if(phoneChatKey(live)!==key||live.chatMetadata!==metadata||live.chat!==chat){const error=Error('聊天已切换，请在当前聊天重新打开手机。');error.code='PHONE_CONTEXT_CHANGED';throw error;}};
  const ready=async(service,creating=false)=>{
-  const read=()=>creating?service.init():service.refresh();
+  // History reconciliation has its own authoritative storage.load(). Other
+  // callers retain the eager refresh; only that queued path skips this duplicate.
+  const read=()=>creating?service.init():refresh?service.refresh():Promise.resolve();
   try{await read();}catch(error){
    const targets=error.code==='PHONE_DATABASE_DETACHED'?error.details?.hydrateSwipes:null;if(!Array.isArray(targets)||!targets.length)throw error;
    for(const target of targets){
@@ -197,9 +199,15 @@ async function getPhoneService(c=context()){
   }
   assertCurrent();return service;
  };
- assertCurrent();const stored=await matrixDatabase.peek();assertCurrent();
+ assertCurrent();const found=phoneServices.get(key);
+ // Queued history reconciliation verifies the authoritative database again in
+ // storage.load(). An already owned service does not need another full peek
+ // merely to reach that single canonical read boundary.
+ if(requireExisting&&found?.meta===metadata&&!nativeGenerationOpen&&!isGenerating()&&!revisionController.active()){const service=await found.promise;assertCurrent();return ready(service);}
+ const stored=await matrixDatabase.peek();assertCurrent();
+ if(requireExisting&&!stored?.state?.tables?.X_PHONE_BINDINGS?.['phone-current'])return null;
  if(nativeGenerationOpen||isGenerating()||revisionController.active()){if(!stored||!decodePhoneDatabase(stored.state,{contextKey:stored.contextKey,revision:stored.revision}))return null;}
- const found=phoneServices.get(key);if(found?.meta===metadata){const service=await found.promise;assertCurrent();return ready(service);}
+ if(found?.meta===metadata){const service=await found.promise;assertCurrent();return ready(service);}
  const row={meta:metadata,promise:null};phoneServices.set(key,row);
  row.promise=(async()=>{
   phoneSeedPromise??=fetch(new URL('./phone-seed.json',import.meta.url)).then(r=>{if(!r.ok)throw Error('手机初始配置加载失败：'+r.status);return r.json();});
@@ -212,12 +220,18 @@ async function getPhoneService(c=context()){
 }
 const phoneTurn=createPhoneTurnHost({getContext:context,persistMetadata:persistConversationMetadata,phoneService:getPhoneService,isGenerating:()=>isGenerating()||!!revisionController.active(),onChange:phoneChanged,onError:error});
 async function reconcilePhoneHistory(){
- const c=context(),key=phoneChatKey(c);
+ const key=phoneChatKey(context());
  const idle=()=>!isGenerating()&&!revisionController.active()&&!revisionController.navigating()&&!phoneTurn.state().active;
  if(!key||!idle())return;
- const existing=(await matrixDatabase.peek())?.state?.tables?.X_PHONE_BINDINGS?.['phone-current'];
- if(!existing||phoneChatKey(context())!==key||context().chatMetadata!==c.chatMetadata||!idle())return;
  return phoneTurn.reconcile();
+}
+let phoneHistoryPaintPending=false;
+function schedulePhoneHistory(){
+ if(phoneHistoryPaintPending)return;phoneHistoryPaintPending=true;
+ // Native navigation, deletion and input rendering finish first. The same
+ // serialized reconcile still runs afterwards and reports every failure; send
+ // and explicit phone opening also await it instead of bypassing history.
+ void afterPaint().then(()=>{phoneHistoryPaintPending=false;return reconcilePhoneHistory();}).catch(error);
 }
 const turnDirections=async options=>{const extensions=await extensionPresentation.compilePreferences();return [...await communication.directions(options),...await phoneTurn.directions(options),{role:'system',content:extensions.prompt||extensionPresentation.contract}];};
 
@@ -228,7 +242,7 @@ function currentNativeDisplayRules(){const c=context();return !c.chatId||!config
 const nativeSourceLayers=createNativeSourceLayers({relocateSources:true,getCardPrompts:hostNative.getCharacterCardFieldsSource,PromptManager,Message,ChatCompletion,getContext:context,getScope:()=>JSON.stringify([phoneChatKey(context()),matrixHost.config.read().revision,nativeGenerationEpoch]),preparePreset:(prompt,manager)=>matrixHost.prepareNativePreset(prompt,manager),finalizeMessages:(messages,info)=>matrixHost.finalizeNativeMessages(messages,info),getAuthorsNotePolicy:()=>({enabled:shouldWIAddPrompt,personaBefore:power_user.persona_description_position===persona_description_positions.TOP_AN?power_user.persona_description??'':'',personaAfter:power_user.persona_description_position===persona_description_positions.BOTTOM_AN?power_user.persona_description??'':''})});
 const matrixHost=createMatrixHost({retryBinding:()=>defaultActivation.retry(),archiveBooks:createNativeChatArchiveBooks({native:worldInfoNative,getContext:context}),manualReview:true,request:(...args)=>configHost.request(...args),getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},catalogSignature:globalThis.__TISYA_CATALOG_SIGNATURE__,persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,getDisplayRules:currentNativeDisplayRules,nativeSources:nativeSourceLayers,expand:text=>substituteParams(text),assertIdle,onError:error,requestTransport:textTransport});
 const turnReviewUI=mountTurnReview(document,{service:matrixHost,onError:error,onForms:()=>openSettings('tables'),active:false});
-const matrixDatabase={read:()=>matrixHost.readDatabase(),peek:()=>matrixHost.peekDatabase(),commit:patch=>matrixHost.commitDatabase(patch),snapshot:input=>matrixHost.readDatabaseSnapshot(input)};
+const matrixDatabase={read:()=>matrixHost.readDatabase(),peek:()=>matrixHost.peekDatabase(),commit:patch=>matrixHost.commitDatabase(patch),snapshot:input=>matrixHost.readDatabaseSnapshot(input),subscribe:fn=>matrixHost.subscribe(fn)};
 const chatMedia=createChatMediaAtlas({peek:matrixDatabase.peek,mutate:callback=>matrixHost.mutate(callback),store:createMediaAssetStore({indexedDB:window.indexedDB,URL:window.URL,crypto:window.crypto}),cardContext:()=>activeNativeCards().map(card=>({id:card.avatar,name:card.name})),evaluateConditions:input=>conditionService.evaluateMediaConditions(input),onChange:()=>appearance?.refresh(),onError:visualError});
 configureRenderingMedia(chatMedia);
 async function ensureMatrixDatabase(){return matrixHost.ensureDatabase();}
@@ -516,7 +530,12 @@ async function openArchiveAtlas(target=null){
  renderEpoch++;const epoch=page('世界图鉴','<div id="tisya-archive-atlas"><p class="tisya-note">正在展开图鉴…</p></div>');
  await afterPaint();if(epoch!==renderEpoch)return false;
  utility=mountTableApp(document,query('#tisya-archive-atlas'),{service:tableService,store:configStore,heading:'世界图鉴',initialPage:'atlas',initialAtlasTarget,onIdentity:ref=>openIdentity(ref),onMediaManage:()=>openSettings('resources'),onClose:()=>hidePage(),onSaved:()=>{appearance?.refresh();decorate();}});
- await utility.ready;return true;
+ await utility.ready;
+ // A restored workspace deliberately skips archive writes during native chat
+ // navigation. Opening the atlas is the explicit consistency checkpoint: keep
+ // the restored page usable, then run the same conflict/read-back verification
+ // and surface any failure instead of presenting a false saved receipt.
+ void matrixHost.syncArchive().catch(error);return true;
 }
 function openEmotionAtlas(){renderEpoch++;page('图鉴 · 内置表情','<div id="tisya-emotion-atlas"></div>');utility=mountEmotionAtlas(document,query('#tisya-emotion-atlas'));}
 async function mayLeaveUtility(){
@@ -1125,13 +1144,18 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
     const bind=(name,fn)=>{const ev=context().eventTypes[name];if(!ev)throw Error('宿主缺少事件 '+name);context().eventSource.on(ev,fn);};
     // Install this before any awaited preset/book work: the initial native
     // load can finish while APP_READY listeners are still running.
-    bind('CHAT_CHANGED',async()=>{
+    bind('CHAT_CHANGED',()=>{
       worldbookConditions.end();
       const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata;
       nativeGenerationEpoch++;nativeGenerationOpen=false;generationOperations.stop();revisionController.contextChanged();phoneTurn.contextChanged();communication.contextChanged();nativeIdleGuard?.contextChanged();configHost.cancelTransport();
       tableService.contextChanged();
-      try{const activation=await defaultActivation.chatChanged();if(activation?.status==='chat-loading'||phoneChatKey(context())!==key||context().chatMetadata!==metadata)return;await matrixHost.event('CHAT_CHANGED');}
-      catch(e){error(e);}
+      // Native navigation owns the first paint. The canonical activation and
+      // reconcile still run afterwards; generation awaits the same activation
+      // promise and every delayed failure remains visible.
+      void afterPaint().then(async()=>{
+       try{const activation=await defaultActivation.chatChanged({syncArchive:false});if(activation?.status==='chat-loading'||phoneChatKey(context())!==key||context().chatMetadata!==metadata)return;await matrixHost.event('CHAT_CHANGED');}
+       catch(e){error(e);}
+      }).catch(error);
     });
     initializePresetConnection(context(),document);
     const presetDrawer=document.querySelector('#ai-config-button .drawer-content');
@@ -1200,16 +1224,17 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
       await phoneTurn.stopped().catch(error);await Promise.all([matrixHost.event('GENERATION_STOPPED'),communication.stopped().catch(error)]);
      });
      matrixHost.register();for(const name of ['MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED']){const ev=context().eventTypes[name];if(ev)context().eventSource.on(ev,(...args)=>{if(!revisionController.active())matrixHost.event(name,...args).catch(error);});}
-     window.Tisya=Object.freeze({version:VERSION,phone:Object.freeze({selectionKey:phoneSelectionKey,openIdentity:()=>openIdentity(),initializeLife:async()=>initializeLifeForCurrentSelection(await getPhoneService()),contextKey:()=>phoneChatKey(context()),recoverPending:options=>phoneTurn.recoverPending(options),service:async()=>{const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata,chat=c.chat,assertCurrent=()=>{const live=context();if(phoneChatKey(live)!==key||live.chatMetadata!==metadata||live.chat!==chat){const error=Error('聊天已切换，请在当前聊天重新打开手机。');error.code='PHONE_CONTEXT_CHANGED';throw error;}};const service=await phoneTurn.service();assertCurrent();if(!isGenerating()&&!revisionController.active()&&!phoneTurn.state().active)await phoneTurn.reconcile();assertCurrent();return service;},snapshot:sourceId=>phoneTurn.snapshot(sourceId),source:message=>phoneTurn.source(message),open:options=>openVirtualPhone(options),close:async()=>{if(!await mayLeaveUtility())return false;hidePage();return true;},state:()=>phoneTurn.state()}),matrix:matrixHost,builtinBooks,creator:matrixCreator,presentation:extensionPresentation,archive:Object.freeze({open:target=>openArchiveAtlas(target).catch(cause=>{error(cause);return false;})}),builtinPreset:()=>{const s=builtinPreset.state();return {receipt:s.receipt,error:s.error?.message??null,busy:s.busy};},operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:Object.freeze({read:()=>matrixDatabase.read(),commit:input=>matrixDatabase.commit(input),sources:sourceBookReader,creation:matrixCreator,foundation:tableService.matrixFoundation,conditions:conditionService}),contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>matrixHost.config.read(),save:(...args)=>matrixHost.config.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
-     for(const name of ['MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED','CHAT_CHANGED']){const ev=context().eventTypes[name];if(ev)context().eventSource.on(ev,()=>reconcilePhoneHistory().catch(error));}
+     window.Tisya=Object.freeze({version:VERSION,phone:Object.freeze({selectionKey:phoneSelectionKey,openIdentity:()=>openIdentity(),initializeLife:async()=>initializeLifeForCurrentSelection(await getPhoneService()),contextKey:()=>phoneChatKey(context()),recoverPending:options=>phoneTurn.recoverPending(options),service:async()=>{const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata,chat=c.chat,assertCurrent=()=>{const live=context();if(phoneChatKey(live)!==key||live.chatMetadata!==metadata||live.chat!==chat){const error=Error('聊天已切换，请在当前聊天重新打开手机。');error.code='PHONE_CONTEXT_CHANGED';throw error;}};const service=await phoneTurn.service(undefined,{refresh:false});assertCurrent();if(!isGenerating()&&!revisionController.active()&&!phoneTurn.state().active)await phoneTurn.reconcile();assertCurrent();return service;},snapshot:sourceId=>phoneTurn.snapshot(sourceId),source:message=>phoneTurn.source(message),open:options=>openVirtualPhone(options),close:async()=>{if(!await mayLeaveUtility())return false;hidePage();return true;},state:()=>phoneTurn.state()}),matrix:matrixHost,builtinBooks,creator:matrixCreator,presentation:extensionPresentation,archive:Object.freeze({open:target=>openArchiveAtlas(target).catch(cause=>{error(cause);return false;})}),builtinPreset:()=>{const s=builtinPreset.state();return {receipt:s.receipt,error:s.error?.message??null,busy:s.busy};},operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:Object.freeze({read:()=>matrixDatabase.read(),commit:input=>matrixDatabase.commit(input),sources:sourceBookReader,creation:matrixCreator,foundation:tableService.matrixFoundation,conditions:conditionService}),contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>matrixHost.config.read(),save:(...args)=>matrixHost.config.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
+     for(const name of ['MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED','CHAT_CHANGED']){const ev=context().eventTypes[name];if(ev)context().eventSource.on(ev,schedulePhoneHistory);}
      window.addEventListener('pagehide',event=>{if(!event.persisted){nativeSourceLayers.dispose();defaultActivation.dispose();presentationMedia.dispose();phoneTurn.dispose();for(const row of phoneServices.values())row.service?.dispose();}});
 
     }catch(err){error(err);}
     emotionCatalog(document).ready.catch(()=>error(new Error('表情图鉴加载失败，请更新扩展后重启。')));
     // Take over the native surface and install every generation guard first.
-    // Slow preset/chat binding and book updates continue in a later task;
-    // generation still awaits the same defaultActivation.ready() promise.
-    setTimeout(()=>{void Promise.allSettled([defaultActivation.start(),builtinBooks.update()]).then(([activation,books])=>{
+    // An existing initial chat is activated by its own CHAT_CHANGED below;
+    // starting a second binding here would compete with the native open.
+    // Generation still awaits the same defaultActivation.ready() promise.
+    setTimeout(()=>{const activation=context().chatId?Promise.resolve({status:'native-chat-pending'}):defaultActivation.start();void Promise.allSettled([activation,builtinBooks.update()]).then(([activation,books])=>{
       if(activation.status==='rejected')error(activation.reason);
       if(books.status==='rejected')error(books.reason);
       else if(books.value.status!=='ready')error(Error('内置书部分更新待处理：'+JSON.stringify({conflicts:books.value.conflicts,errors:books.value.errors})));

@@ -17,3 +17,15 @@ test('water effects resume on document focus without needing a window focus even
  const w=new Window(),d=w.document,root=d.createElement('div');d.body.append(root);let focused=false;d.hasFocus=()=>focused;w.matchMedia=()=>({matches:false,addEventListener(){},removeEventListener(){}});const motion=createWaterMotion({root,assets:{},manifest:{},onError:e=>{throw e;}});await motion.ready;
  w.dispatchEvent(new w.Event('blur'));assert.equal(motion.report().paused,true);focused=true;d.dispatchEvent(new w.FocusEvent('focusin'));assert.equal(motion.report().paused,false);motion.pause(true);d.dispatchEvent(new w.FocusEvent('focusin'));assert.equal(motion.report().paused,true);motion.dispose();await w.happyDOM.abort();
 });
+test('zero-sized flame does no canvas work or continuous RAF and refresh restores full visible animation',async()=>{
+ const w=new Window(),d=w.document;d.body.innerHTML='<main><div class="scene-heading"><canvas id="lamp"></canvas></div></main>';const root=d.querySelector('main'),lamp=d.querySelector('#lamp'),frames=new Map();let ticket=0,now=0,draws=0,visible=false;
+ d.hasFocus=()=>true;w.matchMedia=()=>({matches:false,addEventListener(){},removeEventListener(){}});w.requestAnimationFrame=f=>{frames.set(++ticket,f);return ticket;};w.cancelAnimationFrame=id=>frames.delete(id);
+ w.Image=class{set src(value){this.url=value;this.naturalWidth=this.width=4;this.naturalHeight=this.height=2;}decode(){return Promise.resolve();}};
+ const context=new Proxy({drawImage(){draws++;}},{get:(o,k)=>o[k]??(()=>{}),set:(o,k,v)=>{o[k]=v;return true;}});w.HTMLCanvasElement.prototype.getContext=()=>context;
+ lamp.getBoundingClientRect=()=>visible?{left:0,top:0,right:80,bottom:96,width:80,height:96}:{left:0,top:0,right:0,bottom:0,width:0,height:0};
+ const motion=createWaterMotion({root,lampCanvas:lamp,assets:{flame:'flame-test'},manifest:{flame:{file:'flame',cellWidth:1,cellHeight:1,columns:4,rows:2,frames:8}},onError:e=>{throw e;}});await motion.ready;
+ const step=(ms=16)=>{now+=ms;const batch=[...frames.values()];frames.clear();for(const f of batch)f(now);};
+ assert.equal(frames.size,1);step();assert.equal(frames.size,0);assert.equal(draws,0);const paints=motion.report().paints;for(let i=0;i<20;i++)step();assert.equal(motion.report().paints,paints);assert.equal(draws,0);
+ visible=true;motion.refresh();assert.equal(frames.size,1);step();assert.equal(frames.size,1);assert.equal(draws,2);step();assert.equal(draws,4);assert.equal(lamp.dataset.tick,'16');for(let i=0;i<20;i++)step();assert.equal(frames.size,1);assert.ok(draws>4);assert.ok(motion.report().time>0);
+ motion.pause(true);assert.equal(frames.size,0);const time=motion.report().time;for(let i=0;i<20;i++)step();assert.equal(motion.report().time,time);motion.pause(false);assert.equal(frames.size,1);step();assert.equal(motion.report().time,time);step();assert.ok(motion.report().time>time);motion.dispose();assert.equal(frames.size,0);await w.happyDOM.abort();
+});

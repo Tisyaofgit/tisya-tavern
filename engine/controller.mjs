@@ -1,4 +1,4 @@
-import {sha256,fail,digest} from './common.mjs';
+import {sha256,fail,digest,stable} from './common.mjs';
 /* Host adapter independent of DOM. Event payload numbers are hints, never identities. */
 export const NS='tisya_engine';
 export const PROMPT_KEY='tisya_engine_materials';
@@ -41,8 +41,8 @@ export function captureMessages(ctx,{omitLastAssistant=false,excludeFrom=null}={
 export function signature(messages){return JSON.stringify(messages);}
 
 export class Controller{
-    constructor({getContext,storage,request,onUpdate=()=>{},uid=makeUid}){
-        Object.assign(this,{getContext,storage,request,onUpdate,uid});this.owners=new Map();this.materials=new Map();this.packets=new Map();this.generating=new Map();this.bindingTasks=new Map();
+    constructor({getContext,storage,request,restore=null,onUpdate=()=>{},uid=makeUid}){
+        Object.assign(this,{getContext,storage,request,restore,onUpdate,uid});this.owners=new Map();this.materials=new Map();this.packets=new Map();this.generating=new Map();this.bindingTasks=new Map();
     }
     settings(){const c=this.getContext();return c.extensionSettings[NS]??={mode:'macros'};}
     enabled(ctx=this.getContext()){return Boolean(ctx.chatMetadata?.[NS]?.enabled);}
@@ -59,15 +59,26 @@ export class Controller{
         async function bind(){
             let expectedMeta=metadata[NS];
             const guard=()=>{assertCurrent();const live=this.getContext();if(chatKey(live)!==key||live.chatMetadata!==metadata||live.chat!==chat)fail('CHAT_CHANGED','自动接入期间已切换聊天，原操作已停止');if(metadata[NS]!==expectedMeta)fail('SAVE_CONFLICT','聊天引擎归属已被另一操作修改');};
-            guard();let meta=metadata[NS],bundle,status='existing',targetIsNew=false;
+            guard();let meta=metadata[NS],bundle,status='existing',targetIsNew=false,verifiedHead=false;
             if(meta!=null&&(typeof meta!=='object'||Array.isArray(meta)||typeof meta.chat_uid!=='string'||!meta.chat_uid||typeof meta.owner_chat_key!=='string'))fail('ENGINE_METADATA_INVALID','聊天引擎归属记录损坏，请先恢复原存档');
             const original=meta?digest(meta):null;
-            if(meta){bundle=await this.storage.get(meta.chat_uid);guard();if(digest(metadata[NS])!==original)fail('SAVE_CONFLICT','聊天引擎归属已变化，请重新打开聊天');}
+            if(meta){
+                // An existing same-owner chat can prove its authoritative revision
+                // from the tiny transactional workspace head. Forks, pending
+                // bindings and legacy stores still read the complete bundle.
+                const pendingBinding=meta.binding_pending;
+                if(meta.owner_chat_key===key&&!pendingBinding&&this.storage.stat){
+                    const head=await this.storage.stat(meta.chat_uid);guard();
+                    if(head?.format==='tisya.workspace-head/1'&&head.owner===meta.chat_uid&&Number.isSafeInteger(head.revision)&&head.revision>=0&&typeof head.token==='string'&&head.token)verifiedHead=true;
+                    else bundle=await this.storage.get(meta.chat_uid);
+                }else bundle=await this.storage.get(meta.chat_uid);
+                guard();if(digest(metadata[NS])!==original)fail('SAVE_CONFLICT','聊天引擎归属已变化，请重新打开聊天');
+            }
             const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
             const valid=value=>object(value)&&object(value.state)&&object(value.state.schema)&&object(value.state.tables);
             const pending=meta?.binding_pending;
             if(pending&&(pending.version!==1||!['initial','fork'].includes(pending.kind)))fail('ENGINE_METADATA_INVALID','未完成的自动接入记录无法识别');
-            if(meta&&!bundle&&!pending)fail('ENGINE_STATE_MISSING','此聊天已有引擎绑定，但保存的状态无法读取；已停止自动接入，请恢复原存档');
+            if(meta&&!bundle&&!pending&&!verifiedHead)fail('ENGINE_STATE_MISSING','此聊天已有引擎绑定，但保存的状态无法读取；已停止自动接入，请恢复原存档');
             if(bundle&&!valid(bundle))fail('ENGINE_STATE_INVALID','此聊天保存的引擎状态损坏；已停止自动接入');
             if(meta&&meta.owner_chat_key!==key){
                 if(!bundle)fail('ENGINE_STATE_MISSING','分支来源的引擎状态缺失，未建立空白替代');
@@ -79,12 +90,12 @@ export class Controller{
                 if(metadata[NS]!=null)fail('SAVE_CONFLICT','聊天已由另一操作接入，请重新打开聊天');
                 meta={chat_uid:this.uid(),owner_chat_key:key,origin_chat_keys:[],enabled:false,binding_pending:{version:1,kind:'initial'}};
                 bundle={state};status='created';targetIsNew=true;
-            }else if(!bundle){
+            }else if(!bundle&&!verifiedHead){
                 targetIsNew=true;
                 if(pending.kind==='fork'){bundle=await this.storage.get(pending.source_chat_uid);guard();if(!valid(bundle))fail('ENGINE_STATE_MISSING','未完成分支的来源存档不可用');bundle=structuredClone(bundle);status='forked';}
                 else{bundle={state:await createState({session_ref:String(ctx.chatId),branch_ref:'main'})};guard();status='created';}
             }
-            if(!valid(bundle))fail('ENGINE_STATE_INVALID','初始化返回的引擎状态无效');
+            if(!verifiedHead&&!valid(bundle))fail('ENGINE_STATE_INVALID','初始化返回的引擎状态无效');
             guard();
             if(targetIsNew){
                 bundle=structuredClone(bundle);
@@ -197,9 +208,24 @@ export class Controller{
             const live=this.getContext();if(!ownsCurrent())return null;
             const changed=ensureMessages(live,this.uid);if(changed)await live.saveChat();
             if(!ownsCurrent())return null;
+            let messages=capture(this.getContext());if(!messages)return retry();const stamp=signature(messages);
+            // A verified workspace is already the committed response for this
+            // exact revision and native evidence. Restore it before touching the
+            // large authoritative bundle; dirty evidence falls through to the
+            // ordinary reconcile + CAS path below.
+            if(!options.preview&&this.restore){
+                const restored=await this.restore({id,key,messages});if(!ownsCurrent())return null;
+                if(restored){
+                    const current=capture(this.getContext());if(!current||signature(current)!==stamp)return retry();
+                    const response={...restored,unchanged:true,workspaceRestored:true};this.publish(id,response,stamp);return response;
+                }
+            }
             let bundle=await this.storage.get(id);if(!ownsCurrent())return null;
             if(!bundle)throw Error('此聊天尚未绑定引擎，请导入沙盒JSON或绑定空白引擎。');
-            let messages=capture(this.getContext());if(!messages)return retry();const stamp=signature(messages);
+            // Native loading may append while the authoritative bundle is read.
+            // Recheck before reconcile so an unseeded greeting is persisted first
+            // and never omitted from the request sent under this captured owner.
+            const loaded=capture(this.getContext());if(!loaded||signature(loaded)!==stamp)return retry();
             const response=await this.request('/api/plugin/reconcile',{bundle,messages,scope:bundle.journal?.scope??bundle.state.runtime?.scope});
             if(ownsCurrent()){
                 const current=capture(this.getContext());if(!current||signature(current)!==stamp)return retry();
@@ -208,11 +234,17 @@ export class Controller{
             // it under its captured owner; don't project old data into the new UI.
             const expected=bundle.local_revision??0;response.bundle.local_revision=expected+1;
             if(options.preview){response.preview=true;response.bundle.local_revision=expected;}
-            else if(this.storage.commit){
-                if(!await this.storage.commit(id,expected,response.bundle))throw Error('同一聊天刚被另一窗口更新。较新状态已保留，请刷新此聊天后重试。');
-            }else{
-                const current=await this.storage.get(id);if((current?.local_revision??0)!==expected)throw Error('同一聊天状态版本已变化，较新结果已保留。');
-                await this.storage.set(id,response.bundle);
+            else{
+                // Only the verified workspace fast path may avoid a new revision.
+                // A full reconcile retains the original settlement contract: the
+                // captured old owner still commits expected + 1 even if the UI
+                // switches owner while this asynchronous commit is in flight.
+                if(this.storage.commit){
+                    if(!await this.storage.commit(id,expected,response.bundle))throw Error('同一聊天刚被另一窗口更新。较新状态已保留，请刷新此聊天后重试。');
+                }else{
+                    const current=await this.storage.get(id);if((current?.local_revision??0)!==expected)throw Error('同一聊天状态版本已变化，较新结果已保留。');
+                    await this.storage.set(id,response.bundle);
+                }
             }
             if(!ownsCurrent())return response;
             const fresh=capture(this.getContext());
@@ -261,14 +293,31 @@ export class Controller{
 
 export function indexedStorage(indexedDB){
     const db=new Promise((resolve,reject)=>{const r=indexedDB.open('tisya-engine-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('chats');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+    const headKey=key=>'workspace:head:'+key,isBundle=value=>!!value?.state?.schema&&!!value?.state?.tables,committedTokens=new WeakMap();
+    const head=(key,value)=>({format:'tisya.workspace-head/1',owner:key,revision:value.local_revision??0,token:makeUid()});
     async function transact(mode,fn){const d=await db;return new Promise((resolve,reject)=>{const tx=d.transaction('chats',mode),s=tx.objectStore('chats');let value;const r=fn(s);r.onsuccess=()=>{value=r.result;};r.onerror=()=>reject(r.error);tx.oncomplete=()=>resolve(value);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??Error('本地保存已中断'));});}
+    async function set(key,value){const d=await db,nextHead=isBundle(value)?head(key,value):null;return new Promise((resolve,reject)=>{const tx=d.transaction('chats','readwrite'),s=tx.objectStore('chats');s.put(value,key);if(nextHead)s.put(nextHead,headKey(key));tx.oncomplete=()=>{if(nextHead)committedTokens.set(value,nextHead.token);resolve(value);};tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??Error('本地保存已中断'));});}
     async function commit(key,expected,value){
         const d=await db;
         return new Promise((resolve,reject)=>{
-            const tx=d.transaction('chats','readwrite'),s=tx.objectStore('chats');let committed=false;
-            const read=s.get(key);read.onsuccess=()=>{if((read.result?.local_revision??0)!==expected)return;s.put(value,key);committed=true;};
-            tx.oncomplete=()=>resolve(committed);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??Error('状态保存已中断'));
+            const tx=d.transaction('chats','readwrite'),s=tx.objectStore('chats'),nextHead=head(key,value);let committed=false,current,currentHead,readDone=false,headDone=false;
+            const apply=()=>{
+                if(!readDone||!headDone||(current?.local_revision??0)!==expected)return;
+                // No-change reconciliation retains both the bundle and its cache
+                // identity. The transaction still detects a competing writer and
+                // repairs a legacy missing head; equal revisions with different
+                // content fail closed instead of invalidating a good workspace.
+                if((value?.local_revision??0)===expected){
+                    if(stable(current)!==stable(value))return;
+                    if(currentHead?.format!=='tisya.workspace-head/1'||currentHead.owner!==key||currentHead.revision!==expected||typeof currentHead.token!=='string'||!currentHead.token)s.put(nextHead,headKey(key));
+                    committed=true;return;
+                }
+                s.put(value,key);s.put(nextHead,headKey(key));committed=true;
+            };
+            const read=s.get(key),headRead=s.get(headKey(key));read.onsuccess=()=>{current=read.result;readDone=true;apply();};headRead.onsuccess=()=>{currentHead=headRead.result;headDone=true;apply();};
+            tx.oncomplete=()=>{if(committed){const retained=(value?.local_revision??0)===expected&&currentHead?.format==='tisya.workspace-head/1'&&currentHead.owner===key&&currentHead.revision===expected&&typeof currentHead.token==='string'&&currentHead.token?currentHead.token:nextHead.token;committedTokens.set(value,retained);}resolve(committed);};tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??Error('状态保存已中断'));
         });
     }
-    return {get:key=>transact('readonly',s=>s.get(key)),set:(key,v)=>transact('readwrite',s=>s.put(v,key)),commit};
+    async function stat(key){const d=await db;return new Promise((resolve,reject)=>{const tx=d.transaction('chats','readonly'),s=tx.objectStore('chats');let value,exists=false;const headRead=s.get(headKey(key)),keyRead=s.getKey(key);headRead.onsuccess=()=>{value=headRead.result;};keyRead.onsuccess=()=>{exists=keyRead.result!==undefined;};tx.oncomplete=()=>resolve(exists?value:null);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??Error('工作区索引读取已中断'));});}
+    return {get:key=>transact('readonly',s=>s.get(key)),set,commit,stat,workspaceToken:value=>value&&typeof value==='object'?committedTokens.get(value)??null:null};
 }

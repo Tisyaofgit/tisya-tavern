@@ -28,7 +28,7 @@ test('actual entry point gates worldbook scans through the canonical Matrix cond
  assert.match(payload,/if\(nativeDryRun\|\|!nativeGenerationMatrix\)return/);assert.match(payload,/if\(preparationError\)throw preparationError;await worldbookConditions.assertReady\(\);return await matrixHost.payloadReady\(p\)/);assert.match(payload,/blockPayload\(p,e\)/);
  assert.match(terminal,/bind\('GENERATION_ENDED',finishMainGeneration\)/);assert.match(source,/finishMatrixGeneration\(\{host:matrixHost/);
  assert.match(terminal,/generationOperations.stop\(\);revisionController.stopped\(\)/);assert.match(terminal,/matrixHost.event\('GENERATION_STOPPED'\)/);
- assert.match(changed,/await defaultActivation.chatChanged\(\)[\s\S]*context\(\).chatMetadata!==metadata\)return;await matrixHost.event\('CHAT_CHANGED'\)/);
+ assert.match(changed,/await defaultActivation\.chatChanged\(\{syncArchive:false\}\)[\s\S]*context\(\).chatMetadata!==metadata\)return;await matrixHost.event\('CHAT_CHANGED'\)/);
  assert.match(source,/function finishMainGeneration\([^]*?worldbookConditions.end\(\)/);assert.match(terminal,/bind\('GENERATION_STOPPED'[^]*?worldbookConditions.end\(\)/);assert.match(changed,/bind\('CHAT_CHANGED'[^]*?worldbookConditions.end\(\)/);
  assert.doesNotMatch(before+entries+payload+terminal+changed,/scanPhoneReferenceBooks|nativeConfiguration\.(?:entriesLoaded|before)|tableService\.worldbook|configHost\.(?:before|payloadReady)|tableService\.(?:prepare|archiveFromMessages|acceptOnePass|discardOnePass)/);
 });

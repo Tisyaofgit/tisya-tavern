@@ -36,7 +36,7 @@ test('actual final host payload contains canonical facts once and no machine bin
  const text=JSON.stringify(payload.messages);assert.equal(text.split('唯一资料点：青只在河口值夜。').length-1,1);
  assert.match(text,/好奇/);assert.match(text,/青对旅人/);
  assert.doesNotMatch(text,/SECRET_EXECUTOR_HANDLER|SECRET_AXIS_KEY|\$\.private\.path|dossier-private-id|entity-private-id|relationship-private-id|axis-private-id|T_DYN_RELATION_AXES#/);
- writeFileSync(new URL('../docs/validation/form-audit-20261115/final-payload.json',import.meta.url),JSON.stringify(payload,null,2)+'\n');
+ if(process.env.TISYA_WRITE_FORM_AUDIT==='1')writeFileSync(new URL('../docs/validation/form-audit-20261115/final-payload.json',import.meta.url),JSON.stringify(payload,null,2)+'\n');
 });
 test('phone text-backed references use the same registered name mapping as form acceptance',()=>{
  const e=new Runtime(initializeState(catalog));e.newRecord('X_SOCIAL_ACCOUNTS',{id:'account-private-business-key',name:'雨夜客'},'account-private-row');

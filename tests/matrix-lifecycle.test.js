@@ -79,6 +79,14 @@ test('deleting an accepted reply refunds only its effects and permits a fresh re
  await reopened.run();assert.equal(await f.hp(),4);
 });
 
+test('unchanged workspace reopen avoids reconcile while a real edit still advances it',async()=>{
+ const f=await fixture();f.ctx.chat.push({mes:reply()});await f.controller.run();const before=await f.controller.current(),commits=[],commit=f.options.storage.commit;
+ f.options.storage.commit=async(...args)=>{commits.push(args);return commit(...args);};let available=true;
+ const reopened=new Controller({...f.options,restore:async()=>{if(!available)return null;available=false;return {bundle:structuredClone(before),materials:{},packet:''};}});
+ const unchanged=await reopened.run(),after=await reopened.current();assert.equal(unchanged.unchanged,true);assert.equal(unchanged.workspaceRestored,true);assert.equal(after.local_revision,before.local_revision);assert.deepEqual(after,before);assert.equal(commits.length,0);
+ f.ctx.chat[0].mes=reply(4);const changed=await reopened.run();assert.equal(changed.bundle.local_revision,before.local_revision+1);assert.equal(await f.hp(),6);
+});
+
 test('fork edits and deletes keep the parent state exact across repeated chat switches',async()=>{
  const f=await fixture();f.ctx.chat.push({mes:reply(3)});await f.controller.run();
  const parent={chatId:f.ctx.chatId,chat:structuredClone(f.ctx.chat),chatMetadata:structuredClone(f.ctx.chatMetadata)};

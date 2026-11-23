@@ -633,7 +633,7 @@ function createWaterMotion({root,canvas,lampCanvas,assets,manifest,pauseOnBlur=t
  const doc=root.ownerDocument,win=doc.defaultView,ctx=canvas?.getContext('2d'),flame=lampCanvas?.getContext('2d');
  if(canvas&&!ctx||lampCanvas&&!flame)throw Error('CANVAS_UNAVAILABLE');
  const reduced=win.matchMedia('(prefers-reduced-motion: reduce)'),actors=new Set(),ripples=[];
- let alive=true,ready=false,request=0,last=null,time=0,mode='auto',manualPause=false,blurred=false,width=0,height=0,dpr=1,paints=0,scene='fireflies',effects={...CHAT_DEFAULTS};
+ let alive=true,ready=false,request=0,last=null,time=0,mode='auto',manualPause=false,blurred=false,width=0,height=0,dpr=1,paints=0,drawing=false,scene='fireflies',effects={...CHAT_DEFAULTS};
  const sheets={},listeners=[];const listen=(n,type,fn,opts)=>{n.addEventListener(type,fn,opts);listeners.push(()=>n.removeEventListener(type,fn,opts));};
  const particles=Array.from({length:55},(_,i)=>({x:((i*73+13)%101)/101,y:((i*47+7)%103)/103,s:.4+((i*13)%17)/17,p:i*2.39996}));
  function allowed(){return alive&&ready&&!manualPause&&!reduced.matches&&!doc.hidden&&!blurred;}
@@ -642,7 +642,7 @@ function createWaterMotion({root,canvas,lampCanvas,assets,manifest,pauseOnBlur=t
  function ripple(x,y){if(!canvas||!allowed()||!enabled(canvas))return;const r=root.getBoundingClientRect();if(x<r.left||x>r.right||y<r.top||y>r.bottom)return;if(ripples.length>=9)ripples.shift();ripples.push({x:x-r.left,y:y-r.top,t:time});root.dataset.interactionCount=String(Number(root.dataset.interactionCount??0)+1);}
  function ring(x,y,r,alpha){ctx.strokeStyle='rgba(176,216,199,'+alpha+')';ctx.lineWidth=.75;ctx.beginPath();ctx.ellipse(x,y,r,r*.32,-.14,0,Math.PI*2);ctx.stroke();}
  function environment(){
-  if(!ctx)return;ctx.clearRect(0,0,width,height);const active=enabled(canvas)?selectedEffects(effects,time):[];canvas.dataset.effects=active.join(' ');if(!enabled(canvas))return;const b={left:0,top:0,right:width,bottom:height,width,height};const sceneTop=0;ctx.save();ctx.beginPath();ctx.rect(Math.max(0,b.left),Math.max(0,sceneTop),Math.min(width,b.width),Math.max(0,Math.min(height,b.bottom)-Math.max(0,sceneTop)));ctx.clip();
+  if(!ctx)return false;ctx.clearRect(0,0,width,height);const active=enabled(canvas)?selectedEffects(effects,time):[];canvas.dataset.effects=active.join(' ');if(!enabled(canvas))return false;const b={left:0,top:0,right:width,bottom:height,width,height};const sceneTop=0;ctx.save();ctx.beginPath();ctx.rect(Math.max(0,b.left),Math.max(0,sceneTop),Math.min(width,b.width),Math.max(0,Math.min(height,b.bottom)-Math.max(0,sceneTop)));ctx.clip();
   // Slow concentric disturbances and large, translucent currents behind the text.
   if(active.includes('ripples'))for(let i=0;i<7;i++){const p=(time*.13+i*.163)%1,x=b.left+b.width*(.05+((i*31)%91)/100),y=((i*193)%Math.max(1,height))+.5*Math.sin(time*.4+i)*12;ring(x,y,12+p*100,(1-p)*.22);ring(x,y,7+p*85,(1-p)*.13);}
   if(active.includes('water'))for(let i=0;i<4;i++){ctx.beginPath();ctx.strokeStyle='rgba(105,187,165,.10)';ctx.lineWidth=1.4;const y=height*(i+.5)/4+Math.sin(time*.19+i)*40;ctx.moveTo(b.left,y);ctx.bezierCurveTo(b.left+b.width*.25,y+60*Math.sin(time*.2+i),b.right-b.width*.3,y-85,b.right,y+12);ctx.stroke();}
@@ -654,15 +654,15 @@ function createWaterMotion({root,canvas,lampCanvas,assets,manifest,pauseOnBlur=t
    if(active.includes('fireflies')&&i<15){const x=b.left+p.x*b.width+Math.sin(time*.33+p.p)*15,y=p.y*height+Math.sin(time*.24+p.p)*25,a=.22+.22*Math.sin(time*.9+p.p),r=3+p.s*4,g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'rgba(246,219,138,'+a+')');g.addColorStop(1,'rgba(179,206,137,0)');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,2*r,2*r);ctx.fillStyle='rgba(249,227,161,'+(a+.08)+')';ctx.beginPath();ctx.arc(x,y,.6+p.s*.4,0,Math.PI*2);ctx.fill();}
   }
   ctx.globalAlpha=1;for(let i=ripples.length-1;i>=0;i--){const p=ripples[i],age=time-p.t;if(age>2.1){ripples.splice(i,1);continue;}const y=p.y;ring(p.x,y,4+age*43,(1-age/2.1)*.55);if(age>.16)ring(p.x,y,2+(age-.16)*33,(1-age/2.1)*.3);}
-  ctx.restore();root.dataset.weather=scene;
+  ctx.restore();root.dataset.weather=scene;return true;
  }
  function drawFlame(t){
-  const m=manifest.flame;if(!flame||!sheets.flame)return;
+  const m=manifest.flame;if(!flame||!sheets.flame)return false;const bounds=lampCanvas.getBoundingClientRect();if(bounds.width<=0||bounds.height<=0)return false;
   if(lampCanvas.width!==m.cellWidth){lampCanvas.width=m.cellWidth;lampCanvas.height=m.cellHeight;}
   flame.clearRect(0,0,m.cellWidth,m.cellHeight);flame.globalCompositeOperation='lighter';
   const q=allowed()&&enabled(lampCanvas)?t:0,frame=q*10,index=Math.floor(frame)%m.frames,blend=frame-Math.floor(frame);
   for(const [i,alpha]of [[index,1-blend],[(index+1)%m.frames,blend]]){flame.globalAlpha=alpha;flame.drawImage(sheets.flame,(i%m.columns)*m.cellWidth,Math.floor(i/m.columns)*m.cellHeight,m.cellWidth,m.cellHeight,0,0,m.cellWidth,m.cellHeight);}
-  flame.globalAlpha=1;flame.globalCompositeOperation='source-over';lampCanvas.closest('.scene-heading').style.setProperty('--glow',String(.62+.07*Math.sin(q*7.7)+.035*Math.sin(q*13.1)));lampCanvas.dataset.tick=String(Math.round(q*1000));
+  flame.globalAlpha=1;flame.globalCompositeOperation='source-over';lampCanvas.closest('.scene-heading').style.setProperty('--glow',String(.62+.07*Math.sin(q*7.7)+.035*Math.sin(q*13.1)));lampCanvas.dataset.tick=String(Math.round(q*1000));return true;
  }
  function pose(actor,t){
   const active=allowed()&&enabled(actor.node),elapsed=actor.start===null?null:t-actor.start;
@@ -674,8 +674,8 @@ function createWaterMotion({root,canvas,lampCanvas,assets,manifest,pauseOnBlur=t
   const rate=actor.kind==='tadpole'?12:9;const index=active&&actor.start!==null?Math.floor((t-actor.start)*rate)%actor.meta.frames:actor.idleFrame;
   if(actor.frame!==index){const m=actor.meta;actor.ctx.clearRect(0,0,m.cellWidth,m.cellHeight);actor.ctx.drawImage(sheets[actor.kind],(index%m.columns)*m.cellWidth,Math.floor(index/m.columns)*m.cellHeight,m.cellWidth,m.cellHeight,0,0,m.cellWidth,m.cellHeight);actor.frame=index;actor.node.dataset.frame=String(index);}
  }
- function draw(){environment();drawFlame(time);for(const a of actors){const r=a.node.getBoundingClientRect();if(r.bottom>=0&&r.top<=height)pose(a,time);}paints++;}
- function tick(now){request=0;if(!allowed()){last=null;return;}if(last!==null)time+=Math.min(.05,(now-last)/1000);last=now;draw();request=win.requestAnimationFrame(tick);}
+ function draw(){let active=environment();active=drawFlame(time)||active;for(const a of actors){const r=a.node.getBoundingClientRect();if(r.bottom>=0&&r.top<=height&&r.width>0&&r.height>0){pose(a,time);active=true;}}paints++;return active;}
+ function tick(now){request=0;if(!allowed()){last=null;drawing=false;return;}if(last!==null)time+=Math.min(.05,(now-last)/1000);last=now;drawing=draw();if(drawing)request=win.requestAnimationFrame(tick);else last=null;}
  function sync(){if(request)win.cancelAnimationFrame(request);request=0;last=null;if(ready){if(!allowed()){ctx?.clearRect(0,0,width,height);for(const a of actors)pose(a,time);drawFlame(time);}else request=win.requestAnimationFrame(tick);}root.dataset.motionPaused=String(!allowed());}
  function attach(node,kind){if(!manifest[kind])throw Error('SPRITE_KIND');const meta=manifest[kind],c=doc.createElement('canvas');c.width=meta.cellWidth;c.height=meta.cellHeight;c.setAttribute('aria-hidden','true');node.replaceChildren(c);const a={node,canvas:c,kind,meta,ctx:c.getContext('2d'),frame:-1,idleFrame:kind==='jelly'?3:2,start:null};if(!a.ctx)throw Error('SPRITE_CANVAS');actors.add(a);if(ready)pose(a,time);return {poke(){if(!allowed()||!enabled(node))return;a.start=time;const r=node.getBoundingClientRect();ripple(r.left+r.width*.5,r.top+r.height*.7);},dispose(){actors.delete(a);}};}
  listen(doc,'visibilitychange',()=>{if(!doc.hidden)blurred=false;sync();});listen(win,'blur',()=>{if(pauseOnBlur){blurred=!doc.hasFocus();sync();}});listen(win,'focus',()=>{blurred=false;sync();});listen(doc,'focusin',()=>{if(blurred&&doc.hasFocus()){blurred=false;sync();}});listen(root,'pointerdown',()=>{if(blurred){blurred=false;sync();}},{passive:true});listen(win,'resize',()=>{dimensions();if(ready){if(allowed())draw();else sync();}});listen(reduced,'change',sync);

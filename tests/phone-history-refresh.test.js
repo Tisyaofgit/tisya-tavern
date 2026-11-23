@@ -24,8 +24,8 @@ async function fixture({initialize=true}={}){
  const disk=new Map();let writes=0;const ctx={chatId:'history',characterId:0,chat:[{is_user:true,mes:'起点'}],chatMetadata:{},extensionSettings:{},saveChat:async()=>true};
  const storage={get:async id=>structuredClone(disk.get(id)),set:async(id,v)=>{writes++;disk.set(id,structuredClone(v));},commit:async(id,revision,v)=>{if((disk.get(id)?.local_revision??0)!==revision)return false;writes++;disk.set(id,structuredClone(v));return true;}};
  const host=createMatrixHost({getContext:()=>ctx,getSource:()=>({}),loadCatalog:async()=>catalog,storage,persistSettings:async()=>true,persistMetadata:async()=>true});
- let service=null;
- const phoneTurn=createPhoneTurnHost({getContext:()=>ctx,phoneService:()=>service});
+ let service=null;const serviceOptions=[];
+ const phoneTurn=createPhoneTurnHost({getContext:()=>ctx,phoneService:(c,options)=>{serviceOptions.push(options);return service;}});
  const deps={context:()=>ctx,phoneChatKey:chatKey,matrixDatabase:{peek:()=>host.peekDatabase()},phoneTurn,isGenerating:()=>false,revisionController:{active:()=>false,navigating:()=>false},error:e=>{throw e;}};
  if(initialize){
   await host.ensureDatabase();const db=await host.readDatabase();
@@ -41,7 +41,7 @@ async function fixture({initialize=true}={}){
   service=createPhoneService({seed:{accounts:{me:{name:'本人',role:'self'}},documents:[]},contextKey:chatKey(ctx),storage:createPhoneDatabaseStorage({database:host.createPhoneDatabaseBridge(),contextKey:chatKey(ctx)})});await service.init();
   await service.initLife(readPhoneDatabaseProfile((await host.readDatabase()).state,{worldId:'world',entityId:'person'}));
  }
- return {ctx,host,service,phoneTurn,deps,writes:()=>writes,run:()=>historyHandler(deps)()};
+ return {ctx,host,service,serviceOptions,phoneTurn,deps,writes:()=>writes,run:()=>historyHandler(deps)()};
 }
 
 test('production history gate refreshes the canonical phone after deleting an anchored balance edit',async()=>{
@@ -56,16 +56,17 @@ test('production history gate refreshes the canonical phone after deleting an an
  assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);
 });
 
+test('history reconciliation leaves its single authoritative refresh to the phone queue',async()=>{
+ const f=await fixture();f.serviceOptions.length=0;await f.run();assert.deepEqual(f.serviceOptions,[{refresh:false,requireExisting:true}]);
+});
+
 test('production history gate leaves a chat without phone state uninitialized',async()=>{
  const f=await fixture({initialize:false});const before=f.writes();await f.run();
  assert.equal(await f.host.peekDatabase(),null);assert.equal(f.writes(),before);assert.deepEqual(f.ctx.chatMetadata,{});
 });
 
-test('production history gate rechecks context after its asynchronous database read',async()=>{
- const f=await fixture();let resolve,started=0,reconciles=0;const peek=f.deps.matrixDatabase.peek;
- f.deps.matrixDatabase.peek=async()=>{const snapshot=await peek();started++;await new Promise(r=>{resolve=r;});return snapshot;};
- const original=f.phoneTurn.reconcile;f.phoneTurn.reconcile=(...args)=>{reconciles++;return original(...args);};
- const run=f.run();for(let i=0;i<100&&!started;i++)await new Promise(r=>setTimeout(r,1));
- assert.equal(started,1);f.ctx.chatId='another';f.ctx.chatMetadata={};resolve();await run;
- assert.equal(reconciles,0);assert.equal(await f.host.peekDatabase(),null);assert.deepEqual(f.ctx.chatMetadata,{});
+test('production history gate delegates the canonical read without a duplicate full peek',async()=>{
+ const f=await fixture();let peeks=0,reconciles=0;const peek=f.deps.matrixDatabase.peek,original=f.phoneTurn.reconcile;
+ f.deps.matrixDatabase.peek=(...args)=>{peeks++;return peek(...args);};f.phoneTurn.reconcile=(...args)=>{reconciles++;return original(...args);};
+ await f.run();assert.equal(peeks,0);assert.equal(reconciles,1);assert.deepEqual(f.serviceOptions,[{refresh:false,requireExisting:true}]);
 });

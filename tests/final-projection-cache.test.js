@@ -69,3 +69,28 @@ test('message, branch, phone proof, player binding and review mode each invalida
  const variants=[input,{...input,messages:[{uid:'m',text:'改文'}]},{...input,scope:{branch:'other'}},{...input,proof:{...input.proof,nativeMessages:[{mes:'手机新快照'}]}},{...input,playerBinding:{id:'另一主角'}},{...input,manualReview:true}];
  for(const [index,value] of variants.entries()){const cache=createFinalProjectionCache({storage});assert.deepEqual(await cache.project('chat',value,()=>{computes++;return {index};}),{index});await cache.flush();}assert.equal(computes,variants.length);
 });
+
+
+test('a transactional head restores the whole workspace by revision and dirty evidence without the large bundle',async()=>{
+ const disk=new Map(),heads=new Map([['chat',{format:'tisya.workspace-head/1',owner:'chat',revision:7,token:'head-a'}]]),storage={stat:async key=>structuredClone(heads.get(key)),get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>disk.set(key,structuredClone(value))};
+ const messages=[{uid:'m',text:'正文'}],proof={contextKey:'chat',nativeMessages:[{mes:'正文'}]},input={bundle:{local_revision:7,state:{schema:{},tables:{}}},messages,proof,playerBinding:{id:'主角'},manualReview:true},cache=createFinalProjectionCache({storage});
+ await cache.adopt('chat',input,{bundle:input.bundle,materials:{name:'阿青'}});await cache.flush();assert.equal(disk.get('derived:final-projection:chat').format,'tisya.final-projection/3');
+ const cold=createFinalProjectionCache({storage}),restored=await cold.restore('chat',{messages,proof,playerBinding:{id:'主角'},manualReview:true});assert.equal(restored.materials.name,'阿青');assert.equal(restored.bundle.local_revision,7);assert.equal(cold.report().workspaceHits,1);assert.equal(cold.report().misses,0);
+ assert.equal(await cold.restore('chat',{messages:[{uid:'m',text:'脏正文'}],proof,playerBinding:{id:'主角'},manualReview:true}),null);assert.equal(cold.report().dirty,1);
+ heads.set('chat',{format:'tisya.workspace-head/1',owner:'chat',revision:7,token:'head-newer-write'});assert.equal(await cold.restore('chat',{messages,proof,playerBinding:{id:'主角'},manualReview:true}),null,'same revision with a new authoritative token must not reuse stale content');
+});
+
+test('a stale same-revision adopt cannot borrow the newer workspace token',async()=>{
+ const disk=new Map(),head={format:'tisya.workspace-head/1',owner:'chat',revision:7,token:'new-token'},input={bundle:{local_revision:7},messages:[{uid:'m',text:'正文'}],proof:{contextKey:'chat'}};
+ const storage={stat:async()=>structuredClone(head),get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>disk.set(key,structuredClone(value)),workspaceToken:()=> 'old-token'},cache=createFinalProjectionCache({storage});
+ await cache.adopt('chat',input,{bundle:input.bundle,materials:{name:'过期响应'}});await cache.flush();assert.equal(disk.has('derived:final-projection:chat'),false);
+ assert.equal(await cache.restore('chat',{messages:input.messages,proof:input.proof}),null,'the old hot response must not borrow the new token either');
+});
+
+test('hot workspace restore does not wait for full hashing and a stale adopt cannot persist over a newer head',async()=>{
+ const disk=new Map(),heads=new Map([['chat',{format:'tisya.workspace-head/1',owner:'chat',revision:2,token:'head-b'}]]);let release;const gate=new Promise(resolve=>release=resolve);let sets=0;
+ const storage={stat:async key=>structuredClone(heads.get(key)),get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>{sets++;if(sets===1)await gate;disk.set(key,structuredClone(value));}},cache=createFinalProjectionCache({storage});
+ const input={bundle:{local_revision:2},messages:[{uid:'m',text:'正文'}],proof:{contextKey:'chat'}},pending=cache.adopt('chat',input,{bundle:input.bundle,materials:{name:'即时工作区'}});
+ assert.equal((await cache.restore('chat',{messages:input.messages,proof:input.proof})).materials.name,'即时工作区');release();await pending;
+ heads.set('chat',{format:'tisya.workspace-head/1',owner:'chat',revision:3,token:'head-c'});await cache.adopt('chat',{...input,bundle:{local_revision:2}},{bundle:{local_revision:2},materials:{name:'过期'}});assert.equal(disk.get('derived:final-projection:chat').value.materials.name,'即时工作区');
+});
