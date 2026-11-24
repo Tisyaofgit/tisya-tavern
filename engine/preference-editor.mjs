@@ -11,6 +11,8 @@ export const preferenceTextFields=[
  {key:'editor_enabled',label:'采用编辑原文',type:'BOOLEAN'},
 ];
 export function extendPreferenceCatalog(catalog){
+ const current=catalog.tables.find(t=>t.id===PREFERENCE_TEXT_TABLE);
+ if(!current||preferenceTextFields.every(field=>current.fields.some(item=>item.key===field.key)))return catalog;
  const next=clone(catalog),table=next.tables.find(t=>t.id===PREFERENCE_TEXT_TABLE);
  if(table)for(const field of preferenceTextFields)if(!table.fields.some(f=>f.key===field.key))table.fields.push(clone(field));
  return next;

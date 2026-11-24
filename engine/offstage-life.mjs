@@ -55,7 +55,10 @@ export function extendOffstageSchema(state){
  return state;
 }
 export function extendOffstageCatalog(catalog){
- if(!catalog?.tables)return catalog;const copy=clone(catalog),state={schema:Object.fromEntries(copy.tables.map(table=>[table.id,table])),tables:{}};extendOffstageSchema(state);copy.tables=Object.values(state.schema);return copy;
+ if(!catalog?.tables)return catalog;
+ const schema=Object.fromEntries(catalog.tables.map(table=>[table.id,table])),complete=(tableId,fields)=>!schema[tableId]||fields.every(field=>schema[tableId].fields.some(item=>item.key===field.key));
+ if(schema[OFFSTAGE_RULES]&&complete(OFFSTAGE_RULES,RULE_FIELDS)&&complete('T_DYN_EVENTS',EVENT_LIFECYCLE_FIELDS)&&complete('T_DYN_COGNITION',COGNITION_LIFECYCLE_FIELDS)&&(!schema.T_CHAR_DOSSIER||schema.T_CHAR_DOSSIER.fields.some(field=>field.key==='persona_dynamics')))return catalog;
+ const copy=clone(catalog),state={schema:Object.fromEntries(copy.tables.map(table=>[table.id,table])),tables:{}};extendOffstageSchema(state);copy.tables=Object.values(state.schema);return copy;
 }
 export function personaRuleTemplates(){
  return Object.entries(PERSONA_GROUPS).flatMap(([group,keys])=>keys.flatMap(key=>group==='desires'?['light','shadow'].map(side=>({dimension_group:group,dimension_key:key,side,name:PERSONA_TASK_LABELS[key]+(side==='shadow'?' · 影向':'')})):[{dimension_group:group,dimension_key:key,side:'none',name:PERSONA_TASK_LABELS[key]??key}]));

@@ -1,4 +1,4 @@
-import {sha256,fail,digest,stable} from './common.mjs';
+import {sha256,fail,digest,digestAsync,stable} from './common.mjs';
 /* Host adapter independent of DOM. Event payload numbers are hints, never identities. */
 export const NS='tisya_engine';
 export const PROMPT_KEY='tisya_engine_materials';
@@ -117,7 +117,12 @@ export class Controller{
                 if(ensureMessages(ctx,this.uid)||status==='created'){await ctx.saveChat();guard();}
                 if(this.storage.commit){if(!await this.storage.commit(meta.chat_uid,0,bundle))fail('SAVE_CONFLICT','聊天自动接入时状态已存在，请重新打开聊天');}
                 else{const occupied=await this.storage.get(meta.chat_uid);guard();if(occupied)fail('SAVE_CONFLICT','聊天自动接入时状态已存在');await this.storage.set(meta.chat_uid,bundle);}
-                guard();const saved=await this.storage.get(meta.chat_uid);guard();if(digest(saved)!==digest(bundle))fail('ENGINE_SAVE_UNCONFIRMED','引擎状态写入后未能核对，请重新打开聊天');
+                guard();const saved=await this.storage.get(meta.chat_uid);guard();
+                // Keep the complete canonical read-back check, but do not hash the
+                // whole fresh workspace twice in one main-thread turn. The guards
+                // on both sides retain chat-switch and metadata conflict fencing.
+                const [savedDigest,bundleDigest]=await Promise.all([digestAsync(saved),digestAsync(bundle)]);guard();
+                if(savedDigest!==bundleDigest)fail('ENGINE_SAVE_UNCONFIRMED','引擎状态写入后未能核对，请重新打开聊天');
             }
             if(meta.enabled!==true||meta.binding_pending){
                 guard();const previousEnabled=meta.enabled,previousPending=meta.binding_pending;meta.enabled=true;delete meta.binding_pending;

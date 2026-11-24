@@ -21,7 +21,10 @@ export function extendAttitudeSchema(state){
  return state;
 }
 export function extendAttitudeCatalog(catalog){
- if(!catalog?.tables?.some(t=>t.id===RELATION_AXES))return catalog;
+ const schema=catalog?.tables?.find(t=>t.id===RELATION_AXES);if(!schema)return catalog;
+ const family=schema.fields.find(f=>f.key==='axis_family'),axisFamily=['正向态度','负向态度','专项'];
+ const complete=schema.label==='正负态度与专项关系'&&ATTITUDE_FIELDS.every(field=>schema.fields.some(item=>item.key===field.key))&&(!family||family.label==='态度方向'&&JSON.stringify(family.enum)===JSON.stringify([...new Set([...axisFamily,...(family.enum??[])])]));
+ if(complete)return catalog;
  const copy=clone(catalog);extendAttitudeSchema({schema:Object.fromEntries(copy.tables.map(t=>[t.id,t]))});return copy;
 }
 export function advanceAttitudes(engine,start,end){

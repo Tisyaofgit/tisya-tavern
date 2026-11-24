@@ -18,10 +18,11 @@ function setup(){
  const media=new w.EventTarget();media.matches=false;w.matchMedia=()=>media;
  Object.defineProperty(d,'hidden',{get:()=>hidden});w.performance.now=()=>now;
  w.requestAnimationFrame=f=>{frames.set(++ticket,f);return ticket;};w.cancelAnimationFrame=id=>frames.delete(id);
- const context=new Proxy({createRadialGradient:()=>({addColorStop(){}})},{get:(o,k)=>o[k]??(()=>{}),set:(o,k,v)=>{o[k]=v;return true;}});
- const gl=new Proxy({getShaderParameter:()=>true,getProgramParameter:()=>true,createBuffer:()=>({}),createShader:()=>({}),createProgram:()=>({})},{get:(o,k)=>o[k]??(()=>{})});
+ const calls={gradients:0,drawImages:0,textures:0,deletedTextures:0,textureUploads:0,textureSize:null,nearestFilters:0};
+ const context=new Proxy({createRadialGradient:()=>{calls.gradients++;return {addColorStop(){}};},drawImage:()=>{calls.drawImages++;}},{get:(o,k)=>o[k]??(()=>{}),set:(o,k,v)=>{o[k]=v;return true;}});
+ const gl=new Proxy({NEAREST:9984,getShaderParameter:()=>true,getProgramParameter:()=>true,createBuffer:()=>({}),createShader:()=>({}),createProgram:()=>({}),createTexture:()=>{calls.textures++;return {};},deleteTexture:()=>{calls.deletedTextures++;},texImage2D:(...args)=>{calls.textureUploads++;calls.textureSize=[args[3],args[4]];},texParameteri:(...args)=>{if(args[2]===gl.NEAREST)calls.nearestFilters++;}},{get:(o,k)=>o[k]??(()=>{})});
  w.HTMLCanvasElement.prototype.getContext=kind=>kind==='webgl'?gl:context;
- return {w,d,frames,errors,media,step(ms=16){now+=ms;const batch=[...frames.values()];frames.clear();for(const f of batch)f(now);},hide(value){hidden=value;d.dispatchEvent(new w.Event('visibilitychange'));},async close(){await w.happyDOM.abort();}};
+ return {w,d,frames,errors,media,calls,step(ms=16){now+=ms;const batch=[...frames.values()];frames.clear();for(const f of batch)f(now);},hide(value){hidden=value;d.dispatchEvent(new w.Event('visibilitychange'));},async close(){await w.happyDOM.abort();}};
 }
 test('one scene clock freezes on pause, hidden and reduced motion; disabled remains disabled after system changes',async()=>{
  const f=setup(),scene=mountAtmosphere(f.d,f.d.querySelector('#chat'));
@@ -110,4 +111,15 @@ test('visible bubbles pop only on a hit and remain separate from blank tap rings
  assert.equal(engine.popAt(-100,-100),false);assert.equal(engine.getStats().totalBursts,popped.totalBursts);
  assert.equal(engine.rippleAt(100,100),true);assert.equal(engine.getStats().tapRings,1);
  engine.setPaused(true);assert.equal(engine.popAt(100,100),false);engine.destroy();await f.close();
+});
+
+
+test('animated water and glows reuse their sprites and one packed noise texture across frames',async()=>{
+ const f=setup(),container=f.d.querySelector('#chat'),canvas=f.d.createElement('canvas'),particles=f.d.createElement('canvas');container.append(canvas,particles);
+ const engine=createAtmosphere({container,canvas,particles,shaders:{current:oceanMaterial},random:()=>.5});
+ assert.equal(f.calls.textures,1);assert.equal(f.calls.textureUploads,1);assert.deepEqual(f.calls.textureSize,[256,256]);assert.equal(f.calls.nearestFilters,2);
+ const initial=f.calls.gradients;engine.demonstrateBurst();f.step();const warmed=f.calls.gradients,draws=f.calls.drawImages,time=engine.getStats().materialTime;
+ assert.equal(warmed,initial+1);for(let i=0;i<20;i++)f.step();
+ assert.equal(f.calls.gradients,warmed);assert(f.calls.drawImages>draws+20);assert(engine.getStats().materialTime>time);assert.deepEqual(engine.getStats().effects,['water','ripples','fireflies']);
+ engine.destroy();assert.equal(f.calls.deletedTextures,1);await f.close();
 });

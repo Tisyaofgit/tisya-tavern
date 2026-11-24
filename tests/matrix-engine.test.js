@@ -32,7 +32,9 @@ test('all catalog schemas load; secrets and foreign branch data do not leak into
 test('host loading and state initialization share one idempotent catalog assembly',async()=>{
  const host=createMatrixHost({getContext:()=>({extensionSettings:{}}),getSource:()=>({}),loadCatalog:async()=>catalog,persistSettings:async()=>true,persistMetadata:async()=>true});
  const loaded=await host.catalog(),expected=extendMatrixCatalog(catalog),state=initializeState(catalog);
- assert.deepEqual(loaded,expected);assert.deepEqual(extendMatrixCatalog(loaded),loaded);
+ assert.deepEqual(loaded,expected);const repeated=extendMatrixCatalog(loaded);assert.deepEqual(repeated,loaded);assert.equal(repeated,loaded,'an already complete catalog must not be deep-cloned and extended a second time');
+ const damaged=clone(loaded),preferences=damaged.tables.find(table=>table.id==='T_PREF_SELECTION_OPTIONS');preferences.fields=preferences.fields.filter(field=>field.key!=='preference_group');
+ const repaired=extendMatrixCatalog(damaged);assert.notEqual(repaired,damaged);assert(repaired.tables.find(table=>table.id==='T_PREF_SELECTION_OPTIONS').fields.some(field=>field.key==='preference_group'),'missing content still triggers completion');
  assert.deepEqual(Object.fromEntries(loaded.tables.map(table=>[table.id,table])),state.schema);
  for(const id of ['T_CHAR_MEASURES','T_SYS_OFFSTAGE_RULES','T_SYS_CHANGE_LOG'])assert(state.schema[id],id);
  assert(state.schema.T_PREF_SELECTION_OPTIONS.fields.some(field=>field.key==='preference_group'));

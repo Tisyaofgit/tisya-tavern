@@ -1,6 +1,9 @@
 import {clone,stable,stableId} from './common.mjs';
 
 const HISTORY_TABLES=new Set(['T_SYS_CHANGE_LOG','M_TYPED_VALUES','X_RECORD_META']);
+// Source fragments and archive batch receipts are already immutable evidence or
+// journaled internal state. Their fields must not be copied into business history.
+const JOURNALED_INTERNAL_TABLES=new Set(['T_SYS_SOURCE_FRAGMENTS','T_SYS_ARCHIVE_BATCHES']);
 const own=(object,key)=>Object.hasOwn(object??{},key);
 const row=(values,states={})=>({values,states:Object.fromEntries(Object.keys(values).map(key=>[key,states[key]??'known'])),formulas:{},metadata:{}});
 
@@ -14,6 +17,8 @@ export function extendFieldHistorySchema(state){
 }
 
 export function extendFieldHistoryCatalog(catalog){
+ const field=catalog.tables.find(table=>table.id==='M_TYPED_VALUES')?.fields?.find(item=>item.key==='value_state');
+ if(!field||['derived','error'].every(value=>field.enum?.includes(value)&&(!field.wire_enum||field.wire_enum.includes(value))))return catalog;
  const copy=clone(catalog);
  extendFieldHistorySchema({schema:Object.fromEntries(copy.tables.map(table=>[table.id,table]))});
  return copy;
@@ -56,12 +61,12 @@ function historyContext(runtime){
 // Runtime.set is the one write service for business cells. The log rows live in
 // the same transaction snapshot, so a failed operation removes its candidates.
 export function recordFieldHistory(runtime,tableId,recordId,field,before,after){
- if(HISTORY_TABLES.has(tableId)||runtime.writingHistory)return null;
+ if(HISTORY_TABLES.has(tableId)||JOURNALED_INTERNAL_TABLES.has(tableId)||runtime.writingHistory)return null;
  const schema=runtime.data.schema?.T_SYS_CHANGE_LOG,typed=runtime.data.schema?.M_TYPED_VALUES,spec=runtime.data.schema?.[tableId]?.fields.find(f=>f.key===field);
  if(!schema||!typed||!spec)return null;
  const beforeValue=own(before,'value')?before.value:null,beforeState=before.state??'unset',afterValue=own(after,'value')?after.value:null,afterState=after.state??'unset';
  if(stable(beforeValue)===stable(afterValue)&&beforeState===afterState)return null;
- const operation=runtime.activeOperation??'direct',sequence=Math.max(runtime.historySequence??0,Object.keys(runtime.rows('T_SYS_CHANGE_LOG')).length)+1;runtime.historySequence=sequence;
+ const operation=runtime.activeOperation??'direct',sequence=(runtime.historySequence||Object.keys(runtime.rows('T_SYS_CHANGE_LOG')).length)+1;runtime.historySequence=sequence;
  const changeId=stableId(operation+'|field-change|'+sequence+'|'+tableId+'|'+recordId+'|'+field),context=historyContext(runtime);
  runtime.writingHistory=true;
  try{

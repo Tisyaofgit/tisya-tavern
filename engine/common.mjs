@@ -5,6 +5,9 @@ export class EngineError extends Error {
 }
 export const fail=(code,message,details)=>{throw new EngineError(code,message,details);};
 export const clone=v=>structuredClone(v);
+// Persisted engine states and journal patches are acyclic JSON. JSON snapshots
+// avoid the higher structured-clone overhead without changing general values.
+export const cloneJson=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v));
 export const own=(o,k)=>Object.hasOwn(o??{},k);
 export const stable=v=>{
  const stack=new Set();

@@ -29,6 +29,8 @@ const labels={X_PHONE_LOAN_RULES:'手机贷款规则',X_SHOP_PRODUCT_OPTIONS:'�
 export const PHONE_FORM_SCHEMAS=Object.entries(PHONE_FORM_FIELDS).map(([id,fields])=>({id,label:labels[id]??id,phone_internal:true,fields:[{key:'row_uuid',label:'记录编号',type:'ID'},{key:'world_ref',label:'所属世界',type:'REF',ref:'T_STATIC_WORLDS'},{key:'owner_ref',label:'所属主体',type:'REF',ref:'T_SYS_ENTITIES'},...Object.entries(fields).map(([key,[label,type,ref]])=>({key,label,type,...(ref?{ref}:{})}))]}));
 export function extendPhoneFormCatalog(catalog){
  if(!catalog?.tables?.some(t=>t.id==='X_PHONE_WORLD_CONFIG'))return catalog;
+ const missing=PHONE_FORM_SCHEMAS.some(add=>{const old=catalog.tables.find(t=>t.id===add.id);return !old||add.fields.some(field=>!old.fields.some(f=>f.key===field.key));});
+ if(!missing)return catalog;
  const copy=structuredClone(catalog);for(const add of PHONE_FORM_SCHEMAS){const old=copy.tables.find(t=>t.id===add.id);if(!old)copy.tables.push(structuredClone(add));else for(const field of add.fields)if(!old.fields.some(f=>f.key===field.key))old.fields.push(structuredClone(field));}return copy;
 }
 export async function ensurePhoneFormSchema(database){

@@ -71,6 +71,23 @@ test('failed new-state commit leaves an explicit pending owner that resumes with
  f.storage.commit=commit;const result=await f.controller.ensureBound(f.createState);assert.equal(result.id,pending.chat_uid);assert.equal(f.ctx.chatMetadata[NS].enabled,true);assert.equal(f.disk.size,1);
 });
 
+test('fresh binding still rejects a read-back whose complete canonical content differs',async()=>{
+ const f=fixture(),get=f.storage.get;let verificationReads=0;
+ f.storage.get=async id=>{const saved=await get(id);if(saved&&f.ctx.chatMetadata[NS]?.binding_pending){verificationReads++;saved.journal.baseline_messages[0].text='合成篡改';}return saved;};
+ await assert.rejects(f.controller.ensureBound(f.createState),e=>e.code==='ENGINE_SAVE_UNCONFIRMED');
+ assert.equal(verificationReads,1);assert.equal(f.ctx.chatMetadata[NS].enabled,false);assert(f.ctx.chatMetadata[NS].binding_pending);
+ assert.equal(f.disk.get(f.ctx.chatMetadata[NS].chat_uid).journal.baseline_messages[0].text,'原始开场');
+});
+
+test('chat switch during asynchronous read-back hashing fails closed before enabling',async()=>{
+ const f=fixture(),a=f.ctx,entered=deferred(),gate=deferred(),descriptor=Object.getOwnPropertyDescriptor(globalThis,'crypto'),original=globalThis.crypto;
+ Object.defineProperty(globalThis,'crypto',{configurable:true,value:{subtle:{async digest(algorithm,raw){entered.resolve();await gate.promise;return original.subtle.digest(algorithm,raw);}}}});
+ try{
+  const pending=f.controller.ensureBound(f.createState);pending.catch(()=>{});await entered.promise;const b=f.switch('b');gate.resolve();
+  await assert.rejects(pending,e=>e.code==='CHAT_CHANGED');assert.equal(a.chatMetadata[NS].enabled,false);assert(a.chatMetadata[NS].binding_pending);assert.deepEqual(b.chatMetadata,{});
+ }finally{gate.resolve();if(descriptor)Object.defineProperty(globalThis,'crypto',descriptor);else delete globalThis.crypto;}
+});
+
 test('failed final metadata save retains a recoverable marker and no success is reported',async()=>{
  const f=fixture(),save=f.ctx.saveMetadata;let calls=0;f.ctx.saveMetadata=async function(){if(++calls===2)throw Error('final metadata failure');return save.call(this);};
  await assert.rejects(f.controller.ensureBound(f.createState),/final metadata failure/);const pending=clone(f.ctx.chatMetadata[NS]),state=clone(f.disk.get(pending.chat_uid));assert.equal(pending.enabled,false);assert(pending.binding_pending);
@@ -111,7 +128,10 @@ test('a delayed first-chat failure does not poison later chat activation',async(
 test('rapid A to B to A cancels the first A request and allows the new opening',async()=>{
  const f=fixture(),a=f.ctx,gate=deferred();let calls=0;const {activation}=activated(f,{createState:async scope=>{if(++calls===1)await gate.promise;return f.createState(scope);}});
  const first=activation.start();first.catch(()=>{});await new Promise(r=>setImmediate(r));f.switch('b');const second=activation.chatChanged();second.catch(()=>{});await new Promise(r=>setImmediate(r));f.switch(a);const third=activation.chatChanged();gate.resolve();
- await assert.rejects(first,e=>e.code==='CHAT_CHANGED');await second;await third;assert.equal(a.chatMetadata[NS].enabled,true);assert.equal(f.disk.size,2);
+ await assert.rejects(first,e=>e.code==='CHAT_CHANGED');
+ // B may finish before the rapid reopen or be fenced by it during asynchronous
+ // verification; neither timing may poison the final opening of A.
+ await second.catch(error=>assert.equal(error.code,'CHAT_CHANGED'));await third;assert.equal(a.chatMetadata[NS].enabled,true);assert.equal(f.disk.size,2);
 });
 
 test('failed preset activation prevents all automatic chat writes',async()=>{

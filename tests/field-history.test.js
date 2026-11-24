@@ -31,6 +31,17 @@ test('history replay is idempotent and a failed transaction leaves no committed 
  const failed=e.transaction('appearance:failed',{source:{kind:'narrative'}},()=>{e.set(['T_CHAR_DOSSIER','person','overall_physique',[]],'不应落账');throw Error('rollback');});assert.equal(failed.status,'FAILED');assert.equal(JSON.stringify(e.data.tables.T_SYS_CHANGE_LOG),committed);assert.equal(e.rows('T_CHAR_DOSSIER').person.values.overall_physique,'黑发黑眼，长发及腰');
 });
 
+test('field history sequence reads the existing log table once per runtime instead of once per write',()=>{
+ const initial=make();initial.newRecord('T_CHAR_DOSSIER',{name:'青禾'},'person');const e=new Runtime(initial.data);let scans=0;const rows=e.data.tables.T_SYS_CHANGE_LOG;e.data.tables.T_SYS_CHANGE_LOG=new Proxy(rows,{ownKeys(target){scans++;return Reflect.ownKeys(target);}});
+ e.set(['T_CHAR_DOSSIER','person','overall_physique',[]],'黑发');e.set(['T_CHAR_DOSSIER','person','overall_physique',[]],'黑发及腰');assert.equal(scans,1);assert.equal(readFieldHistory(e.data,{tableId:'T_CHAR_DOSSIER',recordId:'person',field:'overall_physique'}).length,2);
+});
+
+test('journaled source evidence and archive receipts retain their records without duplicate business field history',()=>{
+ const e=make();e.newRecord('T_SYS_SOURCE_FRAGMENTS',{entry_id:'synthetic',revision:1,entry_hash:'body-hash',paragraph_id:'P1',chunk_index:1,chunk_text:'合成原文',chunk_hash:'chunk-hash',source_locator:'main/synthetic@1#P1',total_chunks:1},'fragment');e.newRecord('T_SYS_ARCHIVE_BATCHES',{source_sequence:1,message_ref:'synthetic',commit_status:'未写入'},'batch');
+ assert.equal(e.rows('T_SYS_SOURCE_FRAGMENTS').fragment.values.chunk_text,'合成原文');assert.equal(e.rows('T_SYS_ARCHIVE_BATCHES').batch.values.commit_status,'未写入');assert.deepEqual(readFieldHistory(e.data,{tableId:'T_SYS_SOURCE_FRAGMENTS',recordId:'fragment'}),[]);assert.deepEqual(readFieldHistory(e.data,{tableId:'T_SYS_ARCHIVE_BATCHES',recordId:'batch'}),[]);
+ e.newRecord('T_CHAR_DOSSIER',{name:'青禾'},'person');assert.equal(readFieldHistory(e.data,{tableId:'T_CHAR_DOSSIER',recordId:'person'}).length,1);
+});
+
 test('formula recalculation and tag expiry use the same field history service',()=>{
  const e=make();e.data.runtime.calendar={mode:'MONTH_FIXED',year:1,month:1,day:1};
  e.registerTable('X_HISTORY_PROBE',[{key:'base',label:'输入',type:'NUMBER'},{key:'total',label:'派生值',type:'NUMBER'},{key:'tags',label:'状态',type:'TAGS'}]);

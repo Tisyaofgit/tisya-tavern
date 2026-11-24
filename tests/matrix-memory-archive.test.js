@@ -256,6 +256,11 @@ test('a later manual edit conflicts with delayed archive as a whole and retains 
  const batch=saved.state.runtime.archive_queue[0];assert.equal(batch.status,'blocked');assert.equal(batch.error.code,'ARCHIVE_CONFLICT');assert.equal(saved.state.runtime.receipts['archive:'+batch.source_key],undefined);assert.match(Object.values(saved.state.runtime.sources)[0].reply_raw,/模型本轮建议/);
 });
 
+test('a partially failing earlier temporary plan is isolated before the next archive is staged',()=>{
+ const e=seed();acceptReply(e,reply(1),'m1');const first=e.data.runtime.archive_queue[0];first.plan.changes=[{tableId:'T_STATIC_PLACES',recordId:'temporary-pollution',values:{name:'临时污染'},states:{name:'known'}},{tableId:'T_MISSING_TABLE',recordId:'broken',values:{name:'失败'},states:{name:'known'}}];
+ acceptReply(e,reply(2),'m2');const second=e.data.runtime.archive_queue[1];assert.equal(second.status,'staged',JSON.stringify(second.error));assert(second.plan.warnings.some(w=>w.code==='ARCHIVE_TEMPORARY_VIEW'&&w.source_key===first.source_key));assert(!(second.plan.dependencies??[]).includes(first.source_key));assert.equal(e.rows('T_STATIC_PLACES')['temporary-pollution'],undefined);assert.equal(e.data.runtime.sources['main/m1@1'].reply_raw,reply(1));
+});
+
 test('failed native state commit retains the previous database and a retry settles archive once',async()=>{
  const f=await fixture();await f.accept(reply(1));await f.accept(reply(2));const before=await f.host.export(),commit=f.storage.commit;f.storage.commit=async()=>false;
  await assert.rejects(f.accept(reply(3)),/另一窗口|状态/);assert.deepEqual(await f.host.export(),before);

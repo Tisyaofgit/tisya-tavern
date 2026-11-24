@@ -49,3 +49,10 @@ test('configuration mutation shares the atomic duplicate barrier',async()=>{
  const f=await fixture();await f.host.mutate(e=>e.newRecord('T_STATIC_PLACES',{name:'唯一地点'},'only'));const before=await f.snapshot();
  await assert.rejects(f.host.mutate(e=>e.newRecord('T_STATIC_PLACES',{name:'唯一地点'},'another')),e=>e.code==='OBJECT_IDENTITY_EXISTS');assert.deepEqual(await f.snapshot(),before);
 });
+
+test('form references and uniqueness checks reuse one metadata projection without skipping visibility',()=>{
+ const e=fresh();e.newRecord('M_LIST_VALUES',{text_value:'城门'},'alias');e.newRecord('T_STATIC_PLACES',{name:'北门',aliases:['alias']},'place');e.newRecord('T_SYS_ENTITIES',{kind:'character',name:'甲'},'entity-a');e.newRecord('T_SYS_ENTITIES',{kind:'character',name:'乙'},'entity-b');e.newRecord('T_DYN_RELATIONS_PACTS',{subject_ref:'entity-a',target_ref:'entity-b'},'pact');
+ let scans=0;const rows=e.data.tables.X_RECORD_META;e.data.tables.X_RECORD_META=new Proxy(rows,{ownKeys(target){scans++;return Reflect.ownKeys(target);}});
+ const prepared=context(e);assert(prepared.references.some(r=>r.recordId==='pact'&&r.name==='甲 → 乙'));assert(prepared.references.some(r=>r.recordId==='place'&&r.aliases.includes('城门')));assert.equal(scans,1,'all record and linked-record visibility reads share the prepared metadata index');
+ e.data.tables.X_RECORD_META=rows;const before=structuredClone(e.data);e.data.tables.X_RECORD_META=new Proxy(rows,{ownKeys(target){scans++;return Reflect.ownKeys(target);}});e.data.tables.T_STATIC_PLACES.place.values.name='南门';scans=0;assert.doesNotThrow(()=>assertObjectUniqueness(before,e.data,[{tableId:'T_STATIC_PLACES',recordId:'place'}]));assert.equal(scans,1,'all candidates in one uniqueness barrier share another single metadata index');
+});

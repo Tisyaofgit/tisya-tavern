@@ -15,7 +15,12 @@ export function extendMediaCatalog(catalog){
  const registrations=[
   ...MEDIA_FORM_FIELDS.map(field=>({table_id:MEDIA_TABLE,field})),
   ...PRESENTATION_MEDIA_FIELDS.map(field=>({table_id:'T_PREF_EXTENSION_PRESENTATION',field}))
- ],tables=new Set(catalog.tables.map(table=>table.id));
- const next=registerCatalogParameters(catalog,registrations.filter(registration=>tables.has(registration.table_id)));
+ ],tables=new Set(catalog.tables.map(table=>table.id)),active=registrations.filter(registration=>tables.has(registration.table_id));
+ const complete=Array.isArray(catalog.parameter_definitions)&&Array.isArray(catalog.parameter_bindings)&&active.every(registration=>{
+  const table=catalog.tables.find(item=>item.id===registration.table_id);
+  return table.fields.some(field=>field.key===registration.field.key)&&catalog.parameter_bindings.some(binding=>binding.table_id===registration.table_id&&binding.field_key===registration.field.key);
+ });
+ if(complete){createParameterRegistry(catalog);return catalog;}
+ const next=registerCatalogParameters(catalog,active);
  createParameterRegistry(next);return next;
 }

@@ -63,6 +63,14 @@ export function semanticSchemas(tables){
  return [habits,measures].filter(Boolean).map(t=>({...t,fields:t.fields.map(x=>semanticField(t.id,x))}));
 }
 export function extendSemanticCatalog(catalog){
+ const complete=catalog.tables.every(t=>{
+  if(t.id==='T_CHAR_ANCHORS'&&t.label!=='人物记忆锚点')return false;
+  return t.fields.every(field=>{
+   const into=FIELD_MERGES[t.id]?.[field.key],hint=FIELD_HINTS[t.id]?.[field.key],expectedLabel=semanticField(t.id,field).label;
+   return field.label===expectedLabel&&(!hint||field.fill_hint===hint&&field.description===hint)&&(!into||field.merged_into===into&&field.read_only===true);
+  });
+ })&&catalog.tables.some(t=>t.id==='T_CHAR_MEASURES')&&(!catalog.tables.some(t=>t.id==='T_CHAR_ANCHORS')||catalog.tables.some(t=>t.id==='T_CHAR_HABITS'));
+ if(complete)return catalog;
  const copy=structuredClone(catalog);
  for(const t of copy.tables){if(t.id==='T_CHAR_ANCHORS')t.label='人物记忆锚点';t.fields=t.fields.map(f=>semanticField(t.id,f));}
  for(const t of semanticSchemas(copy.tables))if(!copy.tables.some(x=>x.id===t.id))copy.tables.push(t);

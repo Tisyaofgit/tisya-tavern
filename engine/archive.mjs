@@ -18,16 +18,21 @@ function evidence(text,source,{required=true}={}){
 }
 function matchesGuards(runtime,guards){return guards.every(guard=>{const row=runtime.rows(guard.tableId)[guard.recordId];return !!row===guard.exists&&Object.entries(guard.fields).every(([key,before])=>digest(fieldState(row,key))===digest(before));});}
 function stagingView(runtime,sourceKey){
- let temp=new Runtime(runtime.data);const dependencies=new Map(),schema=[],warnings=[];
- for(const batch of runtime.data.runtime.archive_queue){
-  if(batch.source_key===sourceKey)break;
-  if(batch.format!==VERSION||batch.status!=='staged'||!batch.plan||!matchesGuards(temp,batch.plan.guards))continue;
-  const next=new Runtime(temp.data),added=[];try{
-   for(const change of batch.plan.schema??[])if(!next.data.schema[change.tableId].fields.some(f=>f.key===change.field.key)){next.declareField(change.tableId,change.field);added.push(clone(change));}
-   if(batch.plan.changes.length)applyMatrixChanges(next,batch.plan.changes,{mode:'revise'});
-   for(const change of batch.plan.changes)dependencies.set(change.tableId+'#'+change.recordId,batch.source_key);
-   schema.push(...added);temp=next;
-  }catch(error){warnings.push({code:'ARCHIVE_TEMPORARY_VIEW',source_key:batch.source_key,error:asError(error),message:'临时层关联读取失败，未授予该批关联；原文保留'});}
+ const skipped=new Set(),warnings=[];let temp,dependencies,schema;
+ // The normal path applies each already staged plan once. A failed batch is
+ // isolated by rebuilding the temporary view without it, never by committing it.
+ for(;;){temp=new Runtime(runtime.data);dependencies=new Map();schema=[];let failed=false;
+  for(const batch of runtime.data.runtime.archive_queue){
+   if(batch.source_key===sourceKey)break;
+   if(skipped.has(batch.source_key)||batch.format!==VERSION||batch.status!=='staged'||!batch.plan||!matchesGuards(temp,batch.plan.guards))continue;
+   const added=[];try{
+    for(const change of batch.plan.schema??[])if(!temp.data.schema[change.tableId].fields.some(f=>f.key===change.field.key)){temp.declareField(change.tableId,change.field);added.push(clone(change));}
+    if(batch.plan.changes.length)applyMatrixChanges(temp,batch.plan.changes,{mode:'revise'});
+    for(const change of batch.plan.changes)dependencies.set(change.tableId+'#'+change.recordId,batch.source_key);
+    schema.push(...added);
+   }catch(error){warnings.push({code:'ARCHIVE_TEMPORARY_VIEW',source_key:batch.source_key,error:asError(error),message:'临时层关联读取失败，未授予该批关联；原文保留'});skipped.add(batch.source_key);failed=true;break;}
+  }
+  if(!failed)break;
  }
  return {temp,dependencies,schema,warnings};
 }
