@@ -9,7 +9,9 @@ const managedEntry=(kind,title,content)=>({uid:0,key:[],keysecondary:[],comment:
 function decodeBook(data,owner,kind){
  const managed=Object.values(data?.entries??{}).filter(e=>e.extensions?.[OBJECT_ARCHIVE_MARKER]===OBJECT_ARCHIVE_FORMAT),out=[];
  for(const row of managed){let value;try{value=JSON.parse(row.content);}catch{fail('OBJECT_ARCHIVE_INVALID','对象存档条目无法解析，原书已保留');}
-  check(row.disable===true&&value.format===OBJECT_ARCHIVE_FORMAT&&value.owner?.chat_uid===owner.id&&value.owner?.owner_chat_key===owner.key,'OBJECT_ARCHIVE_OWNER','对象存档属于另一聊天或已损坏，未覆盖');
+  // Renames keep the chat identity; entries signed with an old owner key stay
+  // valid while the origin chain attests them (see chat-archive-book).
+  check(row.disable===true&&value.format===OBJECT_ARCHIVE_FORMAT&&value.owner?.chat_uid===owner.id&&(value.owner?.owner_chat_key===owner.key||owner.meta?.origin_chat_keys?.includes(value.owner?.owner_chat_key)),'OBJECT_ARCHIVE_OWNER','对象存档属于另一聊天或已损坏，未覆盖');
   check(kind==='dossier'?['dossier','dossier-index'].includes(value.kind):['history','events','history-index'].includes(value.kind),'OBJECT_ARCHIVE_INVALID','档案书与历史书条目混放，未覆盖');
   out.push({row,value});
  }

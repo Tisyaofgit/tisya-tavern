@@ -10,9 +10,19 @@ function rejectUnchanged(state, type, payload, match) {
   assert.throws(() => apply(state, type, payload), match);
   assert.equal(JSON.stringify(state), before, '失败必须保留原状态，包括购物车、库存和回执');
 }
+function checkout(s, { kind = 'shop', payment = 'balance', placeId = 'home' } = {}) {
+  const q = reduce(s, { id: `test-${++serial}`, type: 'order.quote', kind, payment, placeId });
+  return reduce(q.state, { id: `test-${++serial}`, type: 'order.checkout', kind, quoteId: q.result.quoteId }).state;
+}
+function rejectCheckoutUnchanged(state, quoteOpts, match) {
+  const q = reduce(state, { id: `test-${++serial}`, type: 'order.quote', ...quoteOpts });
+  const before = JSON.stringify(q.state);
+  assert.throws(() => reduce(q.state, { id: `test-${++serial}`, type: 'order.checkout', kind: quoteOpts.kind ?? 'shop', quoteId: q.result.quoteId }), match);
+  assert.equal(JSON.stringify(q.state), before, '失败必须保留原状态，包括购物车、库存和回执');
+}
 function purchase(productId = 'book', payment = 'balance', placeId = 'home') {
   let s = apply(createDemoState(), 'cart.add', { productId });
-  return apply(s, 'order.checkout', { kind: ['meal', 'coffee', 'fruit'].includes(productId) ? 'food' : 'shop', payment, placeId });
+  return checkout(s, { kind: ['meal', 'coffee', 'fruit'].includes(productId) ? 'food' : 'shop', payment, placeId });
 }
 function deliver(s) {
   const id = s.commerce.orders[0].id;
@@ -63,7 +73,7 @@ test('本人账户转账守恒，未知收款人和余额不足不扣钱', () =>
 test('商城付款留订单，不提前进入背包；商店和外卖购物车分开结算', () => {
   let s = apply(createDemoState(), 'cart.add', { productId: 'book' });
   s = apply(s, 'cart.add', { productId: 'coffee' });
-  s = apply(s, 'order.checkout', { kind: 'shop', payment: 'balance', placeId: 'home' });
+  s = checkout(s, { kind: 'shop', payment: 'balance', placeId: 'home' });
   assert.equal(s.inventory.length, 0); assert.equal(s.commerce.orders[0].total, 5500);
   assert.equal(cash(s), 274500); assert.deepEqual(s.commerce.cart, [{ productId: 'coffee', qty: 1 }]);
   rejectUnchanged(s, 'order.collect', { orderId: s.commerce.orders[0].id }, /尚未送达/);
@@ -72,7 +82,7 @@ test('商城付款留订单，不提前进入背包；商店和外卖购物车�
 test('支付失败保留资金、库存、购物车和全部审计状态', () => {
   let s = apply(createDemoState(), 'wallet.transfer', { to: 'yu', amount: 280000 });
   s = apply(s, 'cart.add', { productId: 'coat' });
-  rejectUnchanged(s, 'order.checkout', { kind: 'shop', payment: 'balance', placeId: 'home' }, /余额不足/);
+  rejectCheckoutUnchanged(s, { kind: 'shop', payment: 'balance', placeId: 'home' }, /余额不足/);
   assert.equal(s.wallet.card.used, 0, '不自动改用信用卡');
 });
 
@@ -105,13 +115,13 @@ test('食物领取前不能吃，吃后不能整单退款或重复吃', () => {
   s = apply(s, 'order.collect', { orderId }); const itemId = s.inventory[0].id;
   s = apply(s, 'inventory.consume', { itemId }); assert.equal(s.inventory[0].qty, 0); assert.equal(s.inventory[0].consumed, 1);
   rejectUnchanged(s, 'inventory.consume', { itemId }, /已经吃完/);
-  rejectUnchanged(s, 'order.refund', { orderId }, /已经使用、消耗/);
+  rejectUnchanged(s, 'order.refund', { orderId }, /已消耗/);
 });
 
 test('完整已领取商品退货同时收回物品、退款、补回库存', () => {
   let s = deliver(purchase()); const orderId = s.commerce.orders[0].id;
   s = apply(s, 'order.collect', { orderId }); s = apply(s, 'order.refund', { orderId });
-  assert.equal(s.inventory.length, 0); assert.equal(cash(s), 280000);
+  assert.equal(s.inventory[0].qty, 0); assert.equal(s.inventory[0].returned, 1); assert.equal(cash(s), 280000);
   assert.equal(s.commerce.products.find(x => x.id === 'book').stock, 12);
   assert.equal(s.commerce.orders[0].status, 'refunded'); assert.equal(validateState(s), true);
 });
@@ -129,7 +139,7 @@ test('信用部分还款后退款：仅未还部分减债，已还部分成为�
   s = apply(s, 'order.cancel', { orderId });
   assert.equal(s.wallet.card.used, 0); assert.equal(s.wallet.card.refundBalance, 1000); assert.equal(cash(s, 'bank'), 599000);
   s = apply(s, 'cart.add', { productId: 'book' });
-  s = apply(s, 'order.checkout', { kind: 'shop', payment: 'credit', placeId: 'home' });
+  s = checkout(s, { kind: 'shop', payment: 'credit', placeId: 'home' });
   assert.equal(s.wallet.card.refundBalance, 0); assert.equal(s.wallet.card.used, 4500);
   s = apply(s, 'order.cancel', { orderId: s.commerce.orders[0].id });
   assert.equal(s.wallet.card.used, 0); assert.equal(s.wallet.card.refundBalance, 1000); assert.equal(validateState(s), true);
@@ -142,13 +152,13 @@ test('信用卡还款有上限，限额不足不会扣现金或改借款', () =>
   rejectUnchanged(s, 'wallet.card.repay', { amount: 1 }, /超过当前信用卡欠款/);
   let limited = createDemoState(); limited.wallet.card.limit = 1000;
   limited = apply(limited, 'cart.add', { productId: 'book' });
-  rejectUnchanged(limited, 'order.checkout', { kind: 'shop', payment: 'credit', placeId: 'home' }, /额度不足/);
+  rejectCheckoutUnchanged(limited, { kind: 'shop', payment: 'credit', placeId: 'home' }, /额度不足/);
 });
 
 test('多笔信用消费退款只抵消原单，已还款不冲错另一笔欠款', () => {
   let s = purchase('book', 'credit'); const firstOrder = s.commerce.orders[0].id;
   s = apply(s, 'cart.add', { productId: 'coat' });
-  s = apply(s, 'order.checkout', { kind: 'shop', payment: 'credit', placeId: 'home' }); const secondOrder = s.commerce.orders[0].id;
+  s = checkout(s, { kind: 'shop', payment: 'credit', placeId: 'home' }); const secondOrder = s.commerce.orders[0].id;
   s = apply(s, 'wallet.card.repay', { amount: 10000 });
   assert.equal(s.wallet.card.used, 21000);
   s = apply(s, 'order.cancel', { orderId: firstOrder });
@@ -240,14 +250,15 @@ test('推进时间不代别人确认日程；明确模拟确认后才有到期�
 test('错误日期、未知位置和倒退时钟均不改原状态', () => {
   const s = createDemoState();
   rejectUnchanged(s, 'calendar.add', { title: '过去', day: 8, minute: 600, placeId: 'home' }, /过去/);
-  rejectUnchanged(s, 'calendar.add', { title: '不存在', day: 31, minute: 600, placeId: 'home' }, /不存在这个日期/);
+  rejectUnchanged(s, 'calendar.add', { title: '不存在', day: 31, minute: 600, placeId: 'home' }, /允许范围内/);
   rejectUnchanged(s, 'map.depart', { placeId: 'secret', mode: 'walk' }, /目的地不存在/);
   rejectUnchanged(s, 'world.advance', { minutes: -1 }, /整数/);
 });
 
-test('篡改现金或债务会被全局守恒校验拒绝，不重置为演示初值', () => {
+test('数据库权威模式下篡改不重置为演示初值，逐笔守恒基线仍在', () => {
   const s = createDemoState(); s.wallet.accounts[0].balance += 1;
-  assert.throws(() => validateState(s), /不守恒/);
-  assert.throws(() => apply(s, 'cart.add', { productId: 'book' }), /不守恒/);
-  assert.equal(s.wallet.accounts[0].balance, 280001);
+  assert.equal(validateState(s), true, '结算归表单数据库后不按演示初值做全局守恒');
+  const next = apply(s, 'wallet.transfer', { from: 'bank', to: 'balance', amount: 100 });
+  assert.equal(cash(next), 280101); assert.equal(cash(next, 'bank'), 599900);
+  assert.equal(s.wallet.accounts[0].balance, 280001, '原档不被操作改写');
 });

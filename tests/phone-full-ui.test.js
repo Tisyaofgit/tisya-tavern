@@ -11,6 +11,7 @@ import {chatKey} from '../engine/controller.mjs';
 import {bootPhone} from '../phone-app.mjs';
 import {PHONE_WORLD_FORMAT,PHONE_CHARACTER_FORMAT} from '../phone-life-config.mjs';
 import {phoneArchiveMediaIds} from '../phone-life/media-archive.mjs';
+import {MEDIA_STORES,mediaDatabaseSchema} from '../engine/media-database.mjs';
 import {photoEditPixels,normalizePhotoEdit} from '../phone-life/photo-editor.mjs';
 import {phoneLyrics,songPlayAccess} from '../phone-life/media-ui.mjs';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -34,8 +35,8 @@ async function fixture({initialize=true}={}){
  await mount();
  async function settle(){await sleep(5);await app.settled?.();await sleep(5);}
  async function put(id,bytes,type='image/png'){
-  const conn=await new Promise((resolve,reject)=>{const q=db.open('tisya-phone-host-media',1);q.onupgradeneeded=()=>q.result.createObjectStore('assets',{keyPath:'id'});q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
-  try{const life=service.readLife();await new Promise((resolve,reject)=>{const tx=conn.transaction('assets','readwrite');tx.objectStore('assets').add({id:JSON.stringify([life.mediaOriginContextKey??key,life.bindingKey,id]),blob:new Blob([bytes],{type})});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}finally{conn.close();}
+  const conn=await new Promise((resolve,reject)=>{const q=db.open('tisya-media',1);q.onupgradeneeded=()=>mediaDatabaseSchema(q.result);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
+  try{const life=service.readLife();await new Promise((resolve,reject)=>{const tx=conn.transaction(MEDIA_STORES.phoneAssets,'readwrite');tx.objectStore(MEDIA_STORES.phoneAssets).add({id:JSON.stringify([life.mediaOriginContextKey??key,life.bindingKey,id]),blob:new Blob([bytes],{type})});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}finally{conn.close();}
  }
  async function addPhoto(id='photo',extra={}){await put(extra.assetId??id,'original '+id,extra.mime??'image/png');await app.dispatch({type:'media.photo.add',photo:{id,assetId:id,name:'图片 '+id,source:'file',mime:'image/png',ownerId:'main',visibility:'private',savedAt:'2026-11-10T12:00:00.000Z',...extra}});await mount();}
  async function addSong(id='song',extra={}){await put('audio-'+id,'audio '+id,'audio/wav');await app.dispatch({type:'music.song.add',song:{id,title:'作品 '+id,artist:'本人',audioId:'audio-'+id,...extra}});}
@@ -56,7 +57,11 @@ test('actual album UI creates, assigns, trashes, restores and keeps referenced b
 });
 test('theme uses actual owned media, survives reopen and cannot publish a private background',async t=>{
  const f=await fixture();t.after(()=>f.close());await f.addPhoto();await f.app.handle('nav',{app:'settings'});await f.app.handle('theme.preset',{preset:'night'});await f.submit('form[data-action="theme.save"]',{backgroundId:'photo',fit:'contain',overlay:35});
- let s=f.service.readLife().state;assert.equal(s.media.theme.preset,'night');assert.equal(s.media.photos[0].visibility,'private');assert.match(f.root.querySelector('.phone').style.getPropertyValue('--phone-wallpaper'),/blob:full-ui/);
+ let s=f.service.readLife().state;assert.equal(s.media.theme.preset,'night');assert.equal(s.media.photos[0].visibility,'private');
+ // Wallpaper resolution reads the asset bytes from IndexedDB before publishing the
+ // blob URL; wait for the real property instead of assuming settle covers it.
+ const wallpaperDeadline=Date.now()+5000;while(!/blob:full-ui/.test(f.root.querySelector('.phone').style.getPropertyValue('--phone-wallpaper'))&&Date.now()<wallpaperDeadline)await sleep(10);
+ assert.match(f.root.querySelector('.phone').style.getPropertyValue('--phone-wallpaper'),/blob:full-ui/);
  await f.mount();assert.equal(f.root.querySelector('.phone').dataset.phoneTheme,'night');assert.equal(f.service.readLife().state.media.theme.overlay,35);
  await f.app.handle('social.account',{accountId:'alt'});assert.equal(f.root.querySelector('.phone').style.getPropertyValue('--phone-wallpaper'),'none');
 });

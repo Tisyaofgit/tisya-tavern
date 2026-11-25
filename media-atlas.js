@@ -1,5 +1,7 @@
 // Media selection is owned by media-contract.js; dialogue only consumes this service.
 import {objectArchiveIdentity,OBJECT_ARCHIVE_TABLES} from './engine/object-archive.mjs';
+import {openMediaDatabase,MEDIA_STORES} from './engine/media-database.mjs';
+import {transact} from './engine/idb-framework.mjs';
 import {MEDIA_TABLE,MEDIA_USE_LABELS,MEDIA_SCOPE_LABELS,mediaUse,mediaAspectFrame,mediaTargetCandidates,resolveMediaTarget,selectBoundMedia} from './media-contract.js';
 export {MEDIA_TABLE,MEDIA_USE_LABELS,MEDIA_SCOPE_LABELS,mediaAspectFrame} from './media-contract.js';
 
@@ -75,16 +77,10 @@ export function mediaTargets(bundle){
 export function createMediaAssetStore({indexedDB=globalThis.indexedDB,URL:URLApi=globalThis.URL,crypto:cryptoApi=globalThis.crypto,maxBytes=20*1024*1024}={}){
  if(!indexedDB){const unsupported=()=>{throw Error('当前宿主不支持本地图鉴数据库');};return {ready:Promise.resolve(),put:async()=>unsupported(),load:async locator=>localId(locator)?'':String(locator??''),remove:async locator=>{if(localId(locator))unsupported();},listBindings:async()=>[],saveBinding:async()=>unsupported(),removeBinding:async()=>unsupported(),cached:locator=>localId(locator)?'':String(locator??''),dispose(){}};}
  let db=null,disposed=false;const urls=new Map(),pending=new Map();
- const ready=new Promise((resolve,reject)=>{
-  const open=indexedDB.open('tisya-media-atlas',2);
-  open.onupgradeneeded=()=>{if(!open.result.objectStoreNames.contains('assets'))open.result.createObjectStore('assets',{keyPath:'id'});if(!open.result.objectStoreNames.contains('bindings'))open.result.createObjectStore('bindings',{keyPath:'id'});};
-  open.onsuccess=()=>{if(disposed){open.result.close();resolve();return;}db=open.result;db.onversionchange=()=>{db.close();db=null;};resolve();};
-  open.onerror=()=>reject(open.error??Error('无法打开本地图鉴数据库'));
-  open.onblocked=()=>reject(Error('本地图鉴升级被旧页面占用，请关闭旧页面后重试'));
- });
- const transaction=async(mode,work,name='assets')=>{
+ const ready=(async()=>{const handle=await openMediaDatabase({indexedDB,label:'本地图鉴数据库',messages:{open:error=>error??Error('无法打开本地图鉴数据库'),blocked:()=>Error('本地图鉴升级被旧页面占用，请关闭旧页面后重试')},onVersionChange:()=>{db=null;}});if(disposed){handle.close();return;}db=handle;})();
+ const transaction=async(mode,work,name=MEDIA_STORES.atlasAssets)=>{
   await ready;if(disposed||!db)throw Error('本地图鉴数据库已关闭');
-  return new Promise((resolve,reject)=>{const tx=db.transaction(name,mode),store=tx.objectStore(name);let value;tx.oncomplete=()=>resolve(value);tx.onerror=()=>reject(tx.error??Error('本地图鉴事务失败'));tx.onabort=()=>reject(tx.error??Error('本地图鉴事务中止'));try{work(store,v=>value=v);}catch(error){reject(error);try{tx.abort();}catch{}}});
+  return transact(db,name,mode,work,{label:'本地图鉴事务'});
  };
  async function put(file){
   if(!file||typeof file.arrayBuffer!=='function')throw Error('请选择图片文件');
@@ -107,9 +103,9 @@ export function createMediaAssetStore({indexedDB=globalThis.indexedDB,URL:URLApi
   await transaction('readwrite',store=>{store.delete(id);});const url=urls.get(id);if(url){URLApi.revokeObjectURL(url);urls.delete(id);}
  }
  return {ready,put,load,remove,
-  listBindings:()=>transaction('readonly',(store,set)=>{const request=store.getAll();request.onsuccess=()=>set(request.result??[]);},'bindings'),
-  saveBinding:binding=>transaction('readwrite',store=>{store.put(structuredClone(binding));},'bindings'),
-  removeBinding:id=>transaction('readwrite',store=>{store.delete(id);},'bindings'),
+  listBindings:()=>transaction('readonly',(store,set)=>{const request=store.getAll();request.onsuccess=()=>set(request.result??[]);},MEDIA_STORES.atlasBindings),
+  saveBinding:binding=>transaction('readwrite',store=>{store.put(structuredClone(binding));},MEDIA_STORES.atlasBindings),
+  removeBinding:id=>transaction('readwrite',store=>{store.delete(id);},MEDIA_STORES.atlasBindings),
   cached:locator=>{const id=localId(locator);return id?urls.get(id)??'':String(locator??'');},dispose(){disposed=true;for(const url of urls.values())URLApi.revokeObjectURL(url);urls.clear();pending.clear();db?.close();db=null;}};
 }
 

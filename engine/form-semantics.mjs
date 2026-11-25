@@ -1,5 +1,7 @@
 // Field ownership is shared by form instructions and narrative projection.
 // A merge is explicit; equal strings in unrelated fields are never evidence.
+import {digest} from './common.mjs';
+import {PHONE_FORM_SCHEMAS} from './phone-form-contract.mjs';
 export const FIELD_MERGES={T_STATIC_PLACES:{legacy_f0343:'macro_region'},X_NETWORK_ITEMS:{author:'by'}};
 export const FIELD_HINTS={
  T_STATIC_PLACES:{macro_region:'所属地域或地理位置；上级地点已有记录时引用上级，不复写其完整介绍',visual_atmosphere:'只写可见的色彩、轮廓、材质观感与空间观感；灯光数值归光照，布局设施归特征，人物往事归事件',legacy_f0344:'只写固定布局、设施、用途和可交互结构；颜色观感归视觉氛围，人物曾在此做什么归事件',light:'光源、明暗、照明覆盖与昼夜变化',background_sound:'地点通常可听见的声音；本轮临时声音归场景',smell:'地点稳定气味；人物气味归人物档案',access_conditions:'谁在什么条件下可进入；公共城市不填写私人住宅门禁'},
@@ -77,9 +79,16 @@ export function extendSemanticCatalog(catalog){
  return copy;
 }
 
-export async function ensureSemanticFormSchema(database){
+// Schema completion is one commit for the whole initialization: semantic and
+// phone additions are computed against the same snapshot and land together.
+export function missingFormSchemas(schema,{phone=false}={}){
+ const missing=semanticSchemas(Object.values(schema)).filter(t=>!schema[t.id]);
+ if(phone)for(const t of PHONE_FORM_SCHEMAS){const old=schema[t.id];if(!old||t.fields.some(f=>!old.fields.some(x=>x.key===f.key)))missing.push(t);}
+ return missing;
+}
+export async function ensureFormSchemas(database,{phone=false}={}){
  const current=await database.read();if(!current)return null;if(!current.state.schema.T_CHAR_ANCHORS)return current;
- const missing=semanticSchemas(Object.values(current.state.schema)).filter(t=>!current.state.schema[t.id]);
+ const missing=missingFormSchemas(current.state.schema,{phone});
  if(!missing.length)return current;
- return database.commit({operationId:'semantic-forms-v1',contextKey:current.contextKey,expectedRevision:current.revision,changes:[],schema:missing,source:{kind:'form-schema',purpose:'single-fact-ownership'}});
+ return database.commit({operationId:'form-schemas:'+digest(missing),contextKey:current.contextKey,expectedRevision:current.revision,changes:[],schema:missing,source:{kind:'form-schema',purpose:phone?'creation-initialization-phone':'single-fact-ownership'}});
 }

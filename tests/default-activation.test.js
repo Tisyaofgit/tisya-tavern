@@ -184,3 +184,47 @@ test('an explicit retry refetches a failed catalog without creating or resetting
  await assert.rejects(activation.start(),/catalog network failure/);assert.equal(f.disk.size,0);assert.deepEqual(f.ctx.chatMetadata,{});await assert.rejects(activation.ready(),/catalog network failure/);assert.equal(loads,1);
  await activation.retry();assert.equal(loads,2);assert.equal(f.ctx.chatMetadata[NS].enabled,true);assert.equal(f.disk.size,1);
 });
+
+test('a renamed chat keeps its engine identity and bundle without any storage write',async()=>{
+ const f=fixture();let serial=100;
+ f.controller.constructor; // fixture controller has no chatExists; build one that sees the old name gone
+ const controller=new Controller({getContext:()=>f.ctx,storage:f.storage,uid:()=>`uid-${++serial}`,chatExists:async()=>false,request(){assert.fail('rename must not settle');}});
+ f.switch(f.ctx);
+ const first=await controller.ensureBound(f.createState),state=clone(f.disk.get(first.id)),writesAfterBind=f.counts().writes;
+ const renamed=f.context('b');renamed.chat=clone(f.ctx.chat);renamed.chatMetadata=clone(f.ctx.chatMetadata);f.switch(renamed);
+ const result=await controller.ensureBound(f.createState);
+ assert.equal(result.status,'existing');assert.equal(result.id,first.id);assert.equal(renamed.chatMetadata[NS].owner_chat_key,chatKey(renamed));assert.equal(renamed.chatMetadata[NS].enabled,true);
+ assert.deepEqual(renamed.chatMetadata[NS].origin_chat_keys,[chatKey(f.context('a'))]);
+ assert.equal(f.counts().writes,writesAfterBind,'rename must not rewrite the bundle');assert.deepEqual(f.disk.get(first.id),state);
+});
+
+test('a copied chat whose source survives still forks under a fresh identity',async()=>{
+ const f=fixture();let serial=100;
+ const controller=new Controller({getContext:()=>f.ctx,storage:f.storage,uid:()=>`uid-${++serial}`,chatExists:async()=>true,request(){assert.fail('fork must not settle');}});
+ const first=await controller.ensureBound(f.createState),parentState=clone(f.disk.get(first.id));
+ const copy=f.context('copy');copy.chat=clone(f.ctx.chat);copy.chatMetadata=clone(f.ctx.chatMetadata);f.switch(copy);
+ const result=await controller.ensureBound(f.createState);
+ assert.equal(result.status,'forked');assert.notEqual(result.id,first.id);assert.equal(copy.chatMetadata[NS].binding_pending,undefined);
+ assert.deepEqual(f.disk.get(first.id),parentState);assert.deepEqual(f.disk.get(result.id),parentState);
+});
+
+test('a failed existence check falls back to the safe fork path',async()=>{
+ const f=fixture();let serial=100;
+ const controller=new Controller({getContext:()=>f.ctx,storage:f.storage,uid:()=>`uid-${++serial}`,chatExists:async()=>{throw Error('chat list offline');},request(){assert.fail('fork must not settle');}});
+ const first=await controller.ensureBound(f.createState);
+ const copy=f.context('copy');copy.chat=clone(f.ctx.chat);copy.chatMetadata=clone(f.ctx.chatMetadata);f.switch(copy);
+ const result=await controller.ensureBound(f.createState);
+ assert.equal(result.status,'forked');assert.notEqual(result.id,first.id);assert.deepEqual(f.disk.get(result.id),f.disk.get(first.id));
+});
+
+test('a pending fork under a renamed owner still pays for a real fork',async()=>{
+ const f=fixture();let serial=100;
+ const controller=new Controller({getContext:()=>f.ctx,storage:f.storage,uid:()=>`uid-${++serial}`,chatExists:async()=>false,request(){assert.fail('fork must not settle');}});
+ const first=await controller.ensureBound(f.createState),parentState=clone(f.disk.get(first.id));
+ const copy=f.context('copy');copy.chat=clone(f.ctx.chat);copy.chatMetadata=clone(f.ctx.chatMetadata);
+ // Simulate an interrupted earlier fork: pending record present, bundle not yet committed for the fork identity.
+ copy.chatMetadata[NS]={...copy.chatMetadata[NS],chat_uid:'uid-900',enabled:false,binding_pending:{version:1,kind:'fork',source_chat_uid:first.id}};
+ f.switch(copy);
+ const result=await controller.ensureBound(f.createState);
+ assert.equal(result.status,'forked');assert.equal(result.id,'uid-900');assert.equal(copy.chatMetadata[NS].enabled,true);assert.deepEqual(f.disk.get('uid-900'),parentState);
+});

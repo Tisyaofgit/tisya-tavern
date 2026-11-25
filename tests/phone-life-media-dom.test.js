@@ -5,6 +5,7 @@ import {IDBFactory} from 'fake-indexeddb';
 import {createPhoneService} from '../phone-core.mjs';
 import {PHONE_TURN_KEY,phoneSource} from '../phone-turn-host.js';
 import {currentPhoneHost,matrixMemoryStorage} from './fixtures/phone-host-current.mjs';
+import {MEDIA_STORES,mediaDatabaseSchema} from '../engine/media-database.mjs';
 import {chatKey} from '../engine/controller.mjs';
 import {bootPhone} from '../phone-app.mjs';
 import {phoneProfile,currentCalendar} from './fixtures/phone-current.mjs';
@@ -44,10 +45,10 @@ async function fixture({context=null,database=new IDBFactory(),matrixStore=matri
   }
   await mount();
   async function putAsset(id,bytes,type='audio/wav'){
-    const db=await new Promise((resolve,reject)=>{const request=database.open('tisya-phone-host-media',1);request.onupgradeneeded=()=>request.result.createObjectStore('assets',{keyPath:'id'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+    const db=await new Promise((resolve,reject)=>{const request=database.open('tisya-media',1);request.onupgradeneeded=()=>mediaDatabaseSchema(request.result);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
     try{
       const life=service.readLife();
-      await new Promise((resolve,reject)=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').add({id:JSON.stringify([life.mediaOriginContextKey??key,life.bindingKey,id]),blob:new Blob([bytes],{type})});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
+      await new Promise((resolve,reject)=>{const tx=db.transaction(MEDIA_STORES.phoneAssets,'readwrite');tx.objectStore(MEDIA_STORES.phoneAssets).add({id:JSON.stringify([life.mediaOriginContextKey??key,life.bindingKey,id]),blob:new Blob([bytes],{type})});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
     }finally{db.close();}
   }
   return {context,database,matrix,matrixStore,win,doc,service,urls,revoked,putAsset,remount:mount,get app(){return app;},get root(){return root;},get audio(){return audio;},get playCount(){return playCount;},get pauseCount(){return pauseCount;},close(){app?.dispose();win.close();}};

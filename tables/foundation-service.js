@@ -1,6 +1,5 @@
-import {ensureSemanticFormSchema} from '../engine/form-semantics.mjs';
+import {ensureFormSchemas} from '../engine/form-semantics.mjs';
 import {readCreationTemplates,creationTemplateText} from '../engine/template-book.mjs';
-import {ensurePhoneFormSchema} from '../engine/phone-form-contract.mjs';
 import {check,copy} from './schema.js';
 import {digest} from './books.js';
 import {prepareCommit} from './ledger.js';
@@ -113,7 +112,7 @@ function createMatrixFoundation({run=fn=>fn(),books,onCommitted,database,request
   const forms=prepareCreationSheets(scoped,options);forms.references=full.references;forms.referenceText=full.referenceText;return forms;
  }
  async function prepare(args={}){return run(async()=>{
-  check(getContext().chatId,'请先打开当前聊天');const key=contextIdentity(),guard=guardFor(key);await ensureDatabase();guard();await ensureSemanticFormSchema(database);guard();if(/手机|全初始化|完整初始化/.test(args.goal??'')){await ensurePhoneFormSchema(database);guard();}const snapshot=await database.read();guard();check(snapshot?.state,'当前聊天尚未接入规范表单');const source=await sourceFor(args,snapshot);guard();
+  check(getContext().chatId,'请先打开当前聊天');const key=contextIdentity(),guard=guardFor(key);await ensureDatabase();guard();await ensureFormSchemas(database,{phone:/手机|全初始化|完整初始化/.test(args.goal??'')});guard();const snapshot=await database.read();guard();check(snapshot?.state,'当前聊天尚未接入规范表单');const source=await sourceFor(args,snapshot);guard();
   const prior=sourceHistory(snapshot).find(s=>s.source?.kind===source.kind&&s.source?.key===source.key);if(prior){check(prior.source.fingerprint===source.fingerprint||source.kind==='initialization','这份具名来源已入档且原文改变；请先核对已有记录，不会作为新历史重复导入');if(prior.source.fingerprint===source.fingerprint)return {already:true,id:prior.operationId,label:args.label??source.key,source};}
   const operationId='matrix-intake:'+matrixDigest({contextKey:snapshot.contextKey,kind:source.kind,fingerprint:source.fingerprint}),task=source.kind==='initialization'||source.kind==='narrative'?'templateInit':'historyImport';
   const creationTemplates=await readCreationTemplates(getContext,{task,goal:args.goal??'',sourceText:typeof source.materials.sourceHistory==='string'?source.materials.sourceHistory:JSON.stringify(source.materials)});guard();

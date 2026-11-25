@@ -26,3 +26,40 @@ test('reader integration reuses hot projections and clearing disables callbacks 
 test('a host-reused message object cannot carry another chat’s in-memory reading state',async()=>{
  const f=setup({prepareMessage:msg=>Promise.resolve({inspection:inspectMessage(msg.mes),viewState:{journey:{tab:'memories'}},save:()=>{}})});try{f.ui.sync(f.node);await settle();let root=f.node.querySelector('.tisya-message-visual').shadowRoot;root.querySelector('[data-jr-tab=more]').click();assert.equal(root.querySelector('[data-jr-tab=more]').getAttribute('aria-current'),'page');f.scope='another-chat';f.ui.sync(f.node);await settle();root=f.node.querySelector('.tisya-message-visual').shadowRoot;assert.notEqual(root.querySelector('[data-jr-tab=more]').getAttribute('aria-current'),'page');}finally{await f.close();}
 });
+
+test('far floors release their live view and remount from cache on approach',async()=>{
+ const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document,ios=[];
+ w.IntersectionObserver=class{constructor(cb){this.cb=cb;this.nodes=new Set();ios.push(this);}observe(n){this.nodes.add(n);}unobserve(n){this.nodes.delete(n);}disconnect(){}};
+ d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_text"></div></div></div>';const node=d.querySelector('.mes'),chat=d.querySelector('#chat');
+ const msg={mes:fixture(),name:'甲',send_date:'1'},saves=[];
+ const ui=mountMessageAppearance(d,{getMessage:()=>msg,getCacheKey:()=>'A'+msg.mes,formatBody:x=>x,getMotion:()=>false,prepareMessage:m=>Promise.resolve({inspection:inspectMessage(m.mes),viewState:{journey:{tab:'more'}},save:state=>saves.push(state)})});
+ ui.sync(node);await settle();assert.equal(ui.size(),1);
+ const rect=(top,bottom)=>({top,bottom,height:bottom-top,bottom,left:0,right:100,width:100,x:0,y:top});
+ chat.getBoundingClientRect=()=>rect(0,1000);node.getBoundingClientRect=()=>rect(-6000,-5000);
+ chat.dispatchEvent(new w.Event('scroll'));await new Promise(r=>setTimeout(r,650));
+ assert.equal(ui.size(),0,'far floor must release its mounted view');assert(node.classList.contains('tisya-history-deferred'),'released floor returns to the deferred native form');assert.equal(node.querySelector('.tisya-message-visual'),null);assert(saves.length>=1,'release persists the reading state first');
+ node.getBoundingClientRect=()=>rect(100,200);
+ for(const io of ios)if(io.nodes.has(node))io.cb([{target:node,isIntersecting:true}]);
+ await settle();assert.equal(ui.size(),1,'approaching remounts from the derived cache');assert(node.querySelector('.tisya-message-visual'));await new Promise(r=>setTimeout(r,650));assert.equal(ui.size(),1,'near floor is never released');
+ ui.dispose();await w.happyDOM.abort();
+});
+
+test('mount margin is a live preference: widening it mounts further floors without a chat reload',async()=>{
+ const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document,ios=[];
+ w.IntersectionObserver=class{constructor(cb){this.cb=cb;this.nodes=new Set();ios.push(this);}observe(n){this.nodes.add(n);}unobserve(n){this.nodes.delete(n);}disconnect(){}};
+ d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_text"></div></div></div>';const node=d.querySelector('.mes'),chat=d.querySelector('#chat');
+ const msg={mes:fixture(),name:'甲',send_date:'1'};let margin=800;
+ const ui=mountMessageAppearance(d,{getMessage:()=>msg,getCacheKey:()=>'A'+msg.mes,getMountMargin:()=>margin,formatBody:x=>x,getMotion:()=>false,prepareMessage:m=>Promise.resolve({inspection:inspectMessage(m.mes)})});
+ const rect=(top,bottom)=>({top,bottom,height:bottom-top,left:0,right:100,width:100,x:0,y:top});
+ chat.getBoundingClientRect=()=>rect(0,1000);node.getBoundingClientRect=()=>rect(2200,2400);
+ ui.sync(node);assert.equal(ui.size(),0,'1200px beyond the viewport exceeds the default 800px margin');assert(node.classList.contains('tisya-history-deferred'));
+ margin=2000;ui.refresh();
+ const observer=ios.at(-1);assert(observer.nodes.has(node),'margin change rebuilds the observer over deferred floors');
+ observer.cb([{target:node,isIntersecting:true}]);await settle();
+ assert.equal(ui.size(),1,'widened margin mounts the floor from cache');assert(!node.classList.contains('tisya-history-deferred'));
+ margin=800;ui.refresh();chat.dispatchEvent(new w.Event('scroll'));await new Promise(r=>setTimeout(r,650));
+ assert.equal(ui.size(),1,'1200px beyond stays mounted inside the 3x release hysteresis');
+ node.getBoundingClientRect=()=>rect(4200,4400);chat.dispatchEvent(new w.Event('scroll'));await new Promise(r=>setTimeout(r,650));
+ assert.equal(ui.size(),0,'3200px beyond releases the floor again');
+ ui.dispose();await w.happyDOM.abort();
+});

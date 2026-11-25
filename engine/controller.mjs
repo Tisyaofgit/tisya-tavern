@@ -41,8 +41,8 @@ export function captureMessages(ctx,{omitLastAssistant=false,excludeFrom=null}={
 export function signature(messages){return JSON.stringify(messages);}
 
 export class Controller{
-    constructor({getContext,storage,request,restore=null,onUpdate=()=>{},uid=makeUid}){
-        Object.assign(this,{getContext,storage,request,restore,onUpdate,uid});this.owners=new Map();this.materials=new Map();this.packets=new Map();this.generating=new Map();this.bindingTasks=new Map();
+    constructor({getContext,storage,request,restore=null,onUpdate=()=>{},uid=makeUid,chatExists=null}){
+        Object.assign(this,{getContext,storage,request,restore,onUpdate,uid,chatExists});this.owners=new Map();this.materials=new Map();this.packets=new Map();this.generating=new Map();this.bindingTasks=new Map();
     }
     settings(){const c=this.getContext();return c.extensionSettings[NS]??={mode:'macros'};}
     enabled(ctx=this.getContext()){return Boolean(ctx.chatMetadata?.[NS]?.enabled);}
@@ -81,10 +81,31 @@ export class Controller{
             if(meta&&!bundle&&!pending&&!verifiedHead)fail('ENGINE_STATE_MISSING','此聊天已有引擎绑定，但保存的状态无法读取；已停止自动接入，请恢复原存档');
             if(bundle&&!valid(bundle))fail('ENGINE_STATE_INVALID','此聊天保存的引擎状态损坏；已停止自动接入');
             if(meta&&meta.owner_chat_key!==key){
-                if(!bundle)fail('ENGINE_STATE_MISSING','分支来源的引擎状态缺失，未建立空白替代');
                 const source=meta;
-                meta={...structuredClone(source),chat_uid:this.uid(),owner_chat_key:key,origin_chat_keys:[...new Set([source.owner_chat_key,...(source.origin_chat_keys??[])].filter(k=>k&&k!==key))],enabled:false,binding_pending:{version:1,kind:'fork',source_chat_uid:source.chat_uid}};
-                status='forked';bundle=structuredClone(bundle);targetIsNew=true;
+                // An interrupted fork can reach a new owner before its first
+                // commit landed; recover the bundle from the recorded source
+                // instead of declaring the state missing.
+                if(!bundle&&source.binding_pending?.kind==='fork'){bundle=await this.storage.get(source.binding_pending.source_chat_uid);guard();}
+                if(!bundle)fail('ENGINE_STATE_MISSING','分支来源的引擎状态缺失，未建立空白替代');
+                // A rename moves the same chat: the old owner key no longer
+                // exists, so the saved bundle is still this chat's own state
+                // and transfers whole. Only a surviving source is a real copy
+                // and pays for a cloned bundle under a fresh identity. When the
+                // check is unavailable or fails, stay on the safe fork path.
+                let renamed=false;
+                if(this.chatExists&&!source.binding_pending){guard();try{renamed=!await this.chatExists(source.owner_chat_key);}catch{renamed=false;}guard();}
+                if(renamed){
+                    meta={...structuredClone(source),owner_chat_key:key,origin_chat_keys:[...new Set([source.owner_chat_key,...(source.origin_chat_keys??[])].filter(k=>k&&k!==key))]};
+                    guard();metadata[NS]=meta;expectedMeta=meta;
+                    await ctx.saveMetadata();guard();
+                }else{
+                    // A pending fork already reserved an identity for this chat;
+                    // keep it so the interrupted commit finishes instead of
+                    // leaking another orphan uid.
+                    const reserved=source.binding_pending?.kind==='fork'?source.chat_uid:this.uid();
+                    meta={...structuredClone(source),chat_uid:reserved,owner_chat_key:key,origin_chat_keys:[...new Set([source.owner_chat_key,...(source.origin_chat_keys??[])].filter(k=>k&&k!==key))],enabled:false,binding_pending:{version:1,kind:'fork',source_chat_uid:source.binding_pending?.kind==='fork'?source.binding_pending.source_chat_uid:source.chat_uid}};
+                    status='forked';bundle=structuredClone(bundle);targetIsNew=true;
+                }
             }else if(!meta){
                 const state=await createState({session_ref:String(ctx.chatId),branch_ref:'main'});guard();
                 if(metadata[NS]!=null)fail('SAVE_CONFLICT','聊天已由另一操作接入，请重新打开聊天');

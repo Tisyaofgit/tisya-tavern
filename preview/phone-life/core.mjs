@@ -1,5 +1,6 @@
 // Demo fixtures stay in the preview; production imports phone-life/core.mjs.
 import {validateState,quoteLoan as configuredQuoteLoan} from '../../phone-life/core.mjs';
+import {WorldClock} from '../../engine/math.mjs';
 export {reduce,money,validateState,quoteJourney,refreshState} from '../../phone-life/core.mjs';
 const DEMO_LOAN={annualRateBps:1200,terms:[3,6,12],periodDays:30,periodsPerYear:12,minAmount:10000,maxAmount:1000000};
 export function quoteLoan(amount,months,source=DEMO_LOAN){return configuredQuoteLoan(amount,months,source);}
@@ -34,7 +35,8 @@ export function createDemoState() {
   };
   s.wallet.defaultAccountId='balance';s.wallet.fundingAccountId='bank';
   s.identity={personId:'me',name:'林间'};s.contacts=[{id:'yu',name:'余舟'},{id:'cafe',name:'日落咖啡'}];
-  s.config={demo:true,apps:['weibo','wallet','shop','food','album','music','map','calendar'],epoch:Date.UTC(2026,10,9,18,0),timezoneOffsetMinutes:0,settlementOwner:'phone',currency:{name:'元',symbol:'¥',minorUnits:2},economy:{loan:DEMO_LOAN,deliveryFees:{shop:600,food:500}},travel:{speeds:{walk:3,bike:7.5,transit:9}}};
+  const calendar={mode:'MONTH_TABLE',month_lengths:[31,28,31,30,31,30,31,31,30,31,30,31],leap_rule:'GREGORIAN',year:2026,month:11,day:9,hour:18,minute:0,day_hours:24,hour_minutes:60};
+  s.config={demo:true,apps:['weibo','wallet','shop','food','album','music','map','calendar'],calendar,calendarOrigin:new WorldClock(calendar).ordinal(),settlementOwner:'tables',database:true,currency:{name:'元',symbol:'¥',minorUnits:2},economy:{loan:DEMO_LOAN,deliveryFees:{shop:600,food:500}},travel:{speeds:{walk:3,bike:7.5,transit:9}}};
   validateState(s);return s;
 }
 

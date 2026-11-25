@@ -87,10 +87,11 @@ test('hosts without IndexedDB keep external media usable and reject only local b
  assert.equal(await store.load('tisya-media://sha256-missing'),'');await assert.rejects(()=>store.put(file()),/不支持本地图鉴数据库/);await assert.rejects(()=>store.remove('tisya-media://sha256-missing'),/不支持本地图鉴数据库/);store.dispose();
 });
 
-test('asset database upgrades from v1 without losing bytes and persists scoped metadata',async()=>{
+test('legacy atlas database is relocated into the unified media store without losing bytes',async()=>{
  const indexedDB=new IDBFactory(),old=await new Promise((resolve,reject)=>{const request=indexedDB.open('tisya-media-atlas',1);request.onupgradeneeded=()=>request.result.createObjectStore('assets',{keyPath:'id'});request.onsuccess=()=>{const db=request.result,tx=db.transaction('assets','readwrite');tx.objectStore('assets').put({id:'sha256-old',blob:file('old bytes'),mime:'image/png'});tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};request.onerror=()=>reject(request.error);});
  const URL=urlApi(),store=createMediaAssetStore({indexedDB,URL,crypto:webcrypto});assert.match(await store.load('tisya-media://sha256-old'),/^blob:test\//);
  await store.saveBinding({id:'global:old',scope:'global',target:{entity:'a',table:'T_CHAR_DOSSIER',label:'守门人'},asset_locator:'tisya-media://sha256-old'});store.dispose();
+ assert.deepEqual((await indexedDB.databases()).map(d=>d.name),['tisya-media']);
  const reopened=createMediaAssetStore({indexedDB,URL:urlApi(),crypto:webcrypto});assert.equal((await reopened.listBindings())[0].id,'global:old');reopened.dispose();
 });
 

@@ -240,7 +240,17 @@ const nativeConfiguration=createNativeConfiguration({getContext:context,regexGat
 const personaGateway=createPersonaGateway({getContext:context,getAvatar:()=>user_avatar,applyActive:(id,name)=>{initUserAvatar(id);setUserName(name,{toastPersonaNameChange:false});setPersonaDescription();},persist:saveSettings});
 function currentNativeDisplayRules(){const c=context();return !c.chatId||!configStore.read().world.theme.nativeRegex||c.extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true});}
 const nativeSourceLayers=createNativeSourceLayers({relocateSources:true,getCardPrompts:hostNative.getCharacterCardFieldsSource,PromptManager,Message,ChatCompletion,getContext:context,getScope:()=>JSON.stringify([phoneChatKey(context()),matrixHost.config.read().revision,nativeGenerationEpoch]),preparePreset:(prompt,manager)=>matrixHost.prepareNativePreset(prompt,manager),finalizeMessages:(messages,info)=>matrixHost.finalizeNativeMessages(messages,info),getAuthorsNotePolicy:()=>({enabled:shouldWIAddPrompt,personaBefore:power_user.persona_description_position===persona_description_positions.TOP_AN?power_user.persona_description??'':'',personaAfter:power_user.persona_description_position===persona_description_positions.BOTTOM_AN?power_user.persona_description??'':''})});
-const matrixHost=createMatrixHost({retryBinding:()=>defaultActivation.retry(),archiveBooks:createNativeChatArchiveBooks({native:worldInfoNative,getContext:context}),manualReview:true,request:(...args)=>configHost.request(...args),getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},catalogSignature:globalThis.__TISYA_CATALOG_SIGNATURE__,persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,getDisplayRules:currentNativeDisplayRules,nativeSources:nativeSourceLayers,expand:text=>substituteParams(text),assertIdle,onError:error,requestTransport:textTransport});
+const matrixHost=createMatrixHost({retryBinding:()=>defaultActivation.retry(),archiveBooks:createNativeChatArchiveBooks({native:worldInfoNative,getContext:context}),manualReview:true,request:(...args)=>configHost.request(...args),getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},catalogSignature:globalThis.__TISYA_CATALOG_SIGNATURE__,persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,getDisplayRules:currentNativeDisplayRules,nativeSources:nativeSourceLayers,expand:text=>substituteParams(text),assertIdle,onError:error,requestTransport:textTransport,chatExists:async ownerKey=>{
+ // Renamed chats keep their engine identity; anything unverifiable forks.
+ try{
+  const parsed=JSON.parse(ownerKey);
+  if(!Array.isArray(parsed)||parsed[0]!=='character')return true;
+  const id=Number(parsed[1]),file=String(parsed[2]??'');
+  if(!Number.isSafeInteger(id)||!file||!context().characters?.[id])return true;
+  const chats=await listChats(id);
+  return chats.some(c=>typeof c.file_name==='string'&&c.file_name.replace(/\.jsonl$/,'')===file);
+ }catch{return true;}
+}});
 const turnReviewUI=mountTurnReview(document,{service:matrixHost,onError:error,onForms:()=>openSettings('tables'),active:false});
 const matrixDatabase={read:()=>matrixHost.readDatabase(),peek:()=>matrixHost.peekDatabase(),commit:patch=>matrixHost.commitDatabase(patch),snapshot:input=>matrixHost.readDatabaseSnapshot(input),subscribe:fn=>matrixHost.subscribe(fn)};
 const chatMedia=createChatMediaAtlas({peek:matrixDatabase.peek,mutate:callback=>matrixHost.mutate(callback),store:createMediaAssetStore({indexedDB:window.indexedDB,URL:window.URL,crypto:window.crypto}),cardContext:()=>activeNativeCards().map(card=>({id:card.avatar,name:card.name})),evaluateConditions:input=>conditionService.evaluateMediaConditions(input),onChange:()=>appearance?.refresh(),onError:visualError});
@@ -1033,7 +1043,7 @@ function init() {
         getPending:node=>Number(node.getAttribute('mesid'))===context().chat.length-1&&(isGenerating()||hasActiveAgentRun()||generationIsBusy()),
         getStreamingSource:(node,msg)=>streamingMessageSource(context(),node,msg),
         getCover:msg=>messageCardCover(context(),msg,avatar=>getThumbnailUrl('avatar',avatar),chatMedia),
-        getMessageCount:()=>context().chat.length,getInitialRenderCount:()=>power_user.chat_truncation,getScope:()=>context().getCurrentChatId(),onHistoryReady:node=>decorate(node),
+        getMessageCount:()=>context().chat.length,getInitialRenderCount:()=>power_user.chat_truncation,getMountMargin:()=>getDisplay().楼层挂载范围,getScope:()=>context().getCurrentChatId(),onHistoryReady:node=>decorate(node),
         ...createMessagePreparation({getScope:()=>context().chatId?worldKey(context()):null,getDisplay,getPlayerName}),
         formatPreparedBody:(body,msg,node)=>messageFormatting(body,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),{},false,{regexPrepared:true,regexSourceText:body}),
         getNativeDisplay:(...args)=>nativeDisplay.project(...args),getRenderKey:(...args)=>nativeDisplay.key(...args),
@@ -1146,6 +1156,9 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
     // load can finish while APP_READY listeners are still running.
     bind('CHAT_CHANGED',()=>{
       worldbookConditions.end();
+      // A chat switch is a durability boundary: persist the previous chat's
+      // dirty derived snapshot before the new chat's work displaces it.
+      void matrixHost.flushProjectionCache();
       const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata;
       nativeGenerationEpoch++;nativeGenerationOpen=false;generationOperations.stop();revisionController.contextChanged();phoneTurn.contextChanged();communication.contextChanged();nativeIdleGuard?.contextChanged();configHost.cancelTransport();
       tableService.contextChanged();
@@ -1167,7 +1180,7 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
     // Register once independently of the visible surface; expanding a macro is read-only.
     try{const syncMessageCache=createMessageCacheScheduler({window,getScope:()=>context().chatId?worldKey(context()):null,getMessages:()=>context().chat,reconcile:reconcileReaderCache,onError:error});
      for(const name of ['CHAT_CHANGED','MESSAGE_RECEIVED','MESSAGE_UPDATED','MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED','GENERATION_ENDED','GENERATION_STOPPED']){const event=context().eventTypes[name];if(event)context().eventSource.on(event,()=>{if(!isGenerating()||['MESSAGE_DELETED','MESSAGE_SWIPE_DELETED','CHAT_CHANGED'].includes(name))syncMessageCache();});}
-     syncMessageCache();document.addEventListener('visibilitychange',()=>{if(document.hidden)readerCache.flush();});textTransport.install();window.addEventListener('pagehide',event=>{if(!event.persisted)textTransport.dispose();});context().registerMacro('tisya_config_selected',()=>configHost.selectedText(),'缇斯亚：只装入选中资源');
+     syncMessageCache();document.addEventListener('visibilitychange',()=>{if(document.hidden){readerCache.flush();void matrixHost.flushProjectionCache();}});textTransport.install();window.addEventListener('pagehide',event=>{void matrixHost.flushProjectionCache();if(!event.persisted)textTransport.dispose();});context().registerMacro('tisya_config_selected',()=>configHost.selectedText(),'缇斯亚：只装入选中资源');
      bind('MESSAGE_RECEIVED',(id,type)=>revisionController.received(id,type));
      bind('GENERATION_STARTED',(_type,options,dryRun)=>{
       if(dryRun)return;

@@ -6,7 +6,6 @@ import {Controller,NS,chatKey} from '../engine/controller.mjs';
 import {createMatrixHost} from '../engine/host.mjs';
 import {baseline} from '../engine/config.mjs';
 import {createDefaultActivation} from '../default-activation.js';
-import {digest} from '../engine/common.mjs';
 const copy=structuredClone,tick=()=>new Promise(r=>setImmediate(r));
 function fixture(){
  const disk=new Map(),heads=new Map(),files=new Map(),writes=[],settings={};let n=0,token=0;
@@ -18,7 +17,13 @@ function fixture(){
  const controller=new Controller({getContext:()=>c,storage:archive.storage,request:async()=>{throw Error('must not settle');},uid:()=>`id-${++n}`});
  const state=()=>({schema:{ACTOR:{fields:[]}},tables:{ACTOR:{}},runtime:{scope:{}}});
  const open=async()=>{const r=await controller.ensureBound(state);await archive.sync();return r;};
- const content=()=>JSON.parse(files.get(c.chatMetadata[NS].archive_book.name).entries[0].content);
+ const book=()=>files.get(c.chatMetadata[NS].archive_book.name);
+ const manifestRow=b=>Object.values(b.entries).find(e=>e.extensions?.tisyaChatArchive==='tisya.chat-archive/2'&&e.extensions.block_slot===undefined);
+ const content=()=>{const b=book(),manifest=JSON.parse(manifestRow(b).content),parts={};
+  for(const e of Object.values(b.entries)){const slot=e.extensions?.block_slot;if(slot!==undefined)parts[slot]=JSON.parse(e.content);}
+  const bundle=parts.meta;bundle.state={...bundle.state,tables:{}};for(const [slot,v]of Object.entries(parts))if(slot.startsWith('table:'))bundle.state.tables[slot.slice(6)]=v;
+  if('journal' in bundle){if('journal' in parts)bundle.journal={...bundle.journal,entries:parts.journal};if('baseline' in parts)bundle.journal={...bundle.journal,baseline_messages:parts.baseline};}
+  return {...manifest,bundle};};
  return {disk,files,writes,books,base,archive,controller,state,open,content,context,get c(){return c;},switch(value){c=typeof value==='string'?context(value):value;}};
 }
 test('opening creates disabled dossier, history and complete recovery books; repeat/cold open reuse them',async()=>{
@@ -61,7 +66,7 @@ test('switch during book save completes only the captured owner',async()=>{
 });
 test('user entries survive updates; corruption, enabled entry and newer archive are rejected',async()=>{
  for(const type of ['extra','corrupt','enabled','newer']){
-  const f=fixture();await f.open();const id=f.c.chatMetadata[NS].chat_uid,book=f.files.get(f.c.chatMetadata[NS].archive_book.name),row=book.entries[0];
+  const f=fixture();await f.open();const id=f.c.chatMetadata[NS].chat_uid,book=f.files.get(f.c.chatMetadata[NS].archive_book.name),row=Object.values(book.entries).find(e=>e.extensions?.block_slot===undefined);
   if(type==='extra'){book.custom={kept:true};book.entries[7]={uid:7,content:'用户附记',disable:false};await f.archive.storage.commit(id,1,{...f.disk.get(id),local_revision:2});assert.deepEqual(f.files.get(f.c.chatMetadata[NS].archive_book.name).entries[7],book.entries[7]);continue;}
   if(type==='corrupt')row.content='broken';if(type==='enabled')row.disable=false;
   if(type==='newer'){const v=f.content();f.disk.get(id).local_revision=0;assert.equal(v.revision,1);}
@@ -103,9 +108,55 @@ test('one changed commit refreshes the book list once across checkpoint and obje
 });
 
 
-test('canonical checkpoints remain readable and migrate to byte-order hashing on the next commit',async()=>{
- const f=fixture();await f.open();const id=f.c.chatMetadata[NS].chat_uid,book=f.files.get(f.c.chatMetadata[NS].archive_book.name),value=f.content();
- value.hash=digest(value.bundle);delete value.hash_algorithm;book.entries[0].content=JSON.stringify(value);
- const fresh=createChatArchiveStorage({storage:f.base,books:f.books,getContext:()=>f.c});await fresh.sync();assert.equal(fresh.status().reused,true);
- await fresh.storage.commit(id,1,{...f.disk.get(id),local_revision:2});assert.equal(f.content().hash_algorithm,'json-sha256');assert.equal(f.content().revision,2);assert.equal(fresh.status().status,'saved');
+test('v1 whole-bundle checkpoints are rebuilt as blocks on the next sync without migration',async()=>{
+ const f=fixture();await f.open();const id=f.c.chatMetadata[NS].chat_uid,name=f.c.chatMetadata[NS].archive_book.name,v2=copy(f.files.get(name)),bundle=f.disk.get(id);
+ // Rebuild the equivalent v1 book: one disabled whole-bundle entry plus a user row.
+ const legacy={format:'tisya.chat-archive/1',chat_uid:id,owner_chat_key:chatKey(f.c),revision:bundle.local_revision??0,bundle};
+ f.files.set(name,{entries:{0:{uid:0,content:JSON.stringify(legacy),disable:true,extensions:{tisyaChatArchive:'tisya.chat-archive/1'}},7:{uid:7,content:'用户附记',disable:false}}});
+ const fresh=createChatArchiveStorage({storage:f.base,books:f.books,getContext:()=>f.c});await fresh.sync();assert.equal(fresh.status().status,'saved');assert.equal(fresh.status().reused,undefined);
+ const rebuilt=f.files.get(name);assert(Object.values(rebuilt.entries).some(e=>e.extensions?.tisyaChatArchive==='tisya.chat-archive/2'),'sync rebuilds the legacy book as blocks');assert(!Object.values(rebuilt.entries).some(e=>e.extensions?.tisyaChatArchive==='tisya.chat-archive/1'));assert.equal(rebuilt.entries[7].content,'用户附记');assert.deepEqual(f.content().bundle,bundle);
+ // A legacy book holding a newer revision still blocks an older local overwrite.
+ f.files.set(name,copy(v2));const newer={...legacy,revision:99};f.files.set(name,{entries:{0:{uid:0,content:JSON.stringify(newer),disable:true,extensions:{tisyaChatArchive:'tisya.chat-archive/1'}}}});
+ await assert.rejects(fresh.sync(),/版本较新/);assert.deepEqual(f.files.get(name).entries[0].disable,true);
+});
+
+
+test('renamed chat keeps syncing checkpoints signed with the old owner key',async()=>{
+ const f=fixture();await f.open();const oldKey=chatKey(f.c),id=f.c.chatMetadata[NS].chat_uid,bookName=f.c.chatMetadata[NS].archive_book.name,before=copy(f.files.get(bookName));
+ // A rename transfers the same chat: new owner key, origin chain attests the old one.
+ const renamed=f.context('甲改名');renamed.chatMetadata=copy(f.c.chatMetadata);renamed.chatMetadata[NS]={...renamed.chatMetadata[NS],owner_chat_key:chatKey(renamed),origin_chat_keys:[oldKey]};f.switch(renamed);
+ await f.archive.sync();assert.equal(f.archive.status().status,'saved');assert.equal(f.archive.status().reused,true);assert.deepEqual(f.files.get(bookName),before);
+ // The next commit rewrites the checkpoint under the new key, self-healing the owner.
+ await f.archive.storage.commit(id,1,{...f.disk.get(id),local_revision:2});assert.equal(f.content().owner_chat_key,chatKey(renamed));assert.equal(f.content().revision,2);assert.equal(f.archive.status().status,'saved');
+});
+
+
+test('a checkpoint from an unrelated chat is still rejected after a rename',async()=>{
+ const f=fixture();await f.open();const id=f.c.chatMetadata[NS].chat_uid,bookName=f.c.chatMetadata[NS].archive_book.name;
+ const renamed=f.context('甲改名');renamed.chatMetadata=copy(f.c.chatMetadata);renamed.chatMetadata[NS]={...renamed.chatMetadata[NS],owner_chat_key:chatKey(renamed),origin_chat_keys:['["character",0,"别的聊天"]']};f.switch(renamed);
+ await assert.rejects(f.archive.sync(),/存档书属于另一聊天/);assert.equal(f.archive.status().status,'error');assert(f.files.has(bookName));
+});
+
+test('a new revision rewrites only the manifest and the dirty blocks',async()=>{
+ const f=fixture();await f.open();const id=f.c.chatMetadata[NS].chat_uid,name=f.c.chatMetadata[NS].archive_book.name,before=copy(f.files.get(name));
+ const next=copy(f.disk.get(id));next.local_revision=2;next.state.tables.ACTOR['r1']={values:{hp:7}};
+ await f.archive.storage.commit(id,1,next);
+ const bySlot=b=>Object.fromEntries(Object.values(b.entries).filter(e=>e.extensions?.block_slot!==undefined).map(e=>[e.extensions.block_slot,e]));
+ const b0=bySlot(before),b1=bySlot(f.files.get(name));
+ assert.deepEqual(Object.keys(b1).sort(),Object.keys(b0).sort());
+ const moved=Object.keys(b0).filter(slot=>b0[slot].content!==b1[slot].content);
+ for(const slot of Object.keys(b0))if(!moved.includes(slot))assert.equal(b1[slot].uid,b0[slot].uid,'unchanged blocks keep their row identity');
+ assert.deepEqual(moved.sort(),['meta','table:ACTOR'],'only the revision-bearing meta block and the touched table move');
+ assert.equal(f.content().revision,2);assert.deepEqual(f.content().bundle,f.disk.get(id));
+});
+
+test('removing a table drops its stale block while other blocks keep their rows',async()=>{
+ const f=fixture();await f.open();const id=f.c.chatMetadata[NS].chat_uid,name=f.c.chatMetadata[NS].archive_book.name;
+ const withPet=copy(f.disk.get(id));withPet.local_revision=2;withPet.state.tables.PET={p1:{values:{name:'团子'}}};await f.archive.storage.commit(id,1,withPet);
+ const before=copy(f.files.get(name));assert(Object.values(before.entries).some(e=>e.extensions?.block_slot==='table:PET'));
+ const dropped=copy(withPet);dropped.local_revision=3;delete dropped.state.tables.PET;await f.archive.storage.commit(id,2,dropped);
+ const after=f.files.get(name);assert(!Object.values(after.entries).some(e=>e.extensions?.block_slot==='table:PET'),'stale blocks are removed with their table');
+ const rowOf=(b,slot)=>Object.values(b.entries).find(e=>e.extensions?.block_slot===slot);
+ assert.equal(rowOf(after,'table:ACTOR').uid,rowOf(before,'table:ACTOR').uid);assert.equal(rowOf(after,'table:ACTOR').content,rowOf(before,'table:ACTOR').content);
+ assert.equal(f.content().revision,3);assert.deepEqual(f.content().bundle,f.disk.get(id));
 });

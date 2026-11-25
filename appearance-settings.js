@@ -1,13 +1,13 @@
 import {mountAppearance} from './settings-core.js';
 import {visualAssets} from './visual-assets.js';
 import {BODY_FIELDS,BODY_DEFAULTS} from './typography-core.js';
-import {DISPLAY_FIELDS,DISPLAY_DEFAULTS} from './display-settings.js';
+import {DISPLAY_FIELDS,DISPLAY_DEFAULTS,displayFieldValid} from './display-settings.js';
 export const COMMON_FIELDS=Object.freeze({装饰程度:['简洁','标准','丰富'],动画效果:[true,false]});
 export const APPEARANCE_OWNERS=Object.freeze({general:'通用外观',title:'场景题签',task:'本轮任务',heart:'缇斯亚心声',body:'正文',extra:'世界扩展',next:'行动栏',records:'本轮记录',extensions:'旅程与聊天外观'});
 export const appearanceFields=owner=>{if(!APPEARANCE_OWNERS[owner])throw Error('显示区块不存在');return {...COMMON_FIELDS,...(owner==='body'?{...BODY_FIELDS,角色对白框:[true,false],署名心声:[true,false]}:owner==='extensions'?DISPLAY_FIELDS:{})};};
 const base={装饰程度:'标准',动画效果:true},defaults={title:{装饰程度:'丰富'},body:{装饰程度:'简洁',...BODY_DEFAULTS,角色对白框:true,署名心声:true},extensions:DISPLAY_DEFAULTS};
 const plain=v=>v&&typeof v==='object'&&!Array.isArray(v);
-export function appearanceOverrides(settings,owner){const blocks=settings.显示区块;if(blocks!==undefined&&!plain(blocks))throw Error('显示区块配置损坏');const values=blocks?.[owner]??{};if(!plain(values)||Object.entries(values).some(([k,v])=>!appearanceFields(owner)[k]?.includes(v)))throw Error(APPEARANCE_OWNERS[owner]+'配置损坏');return {...values};}
+export function appearanceOverrides(settings,owner){const blocks=settings.显示区块;if(blocks!==undefined&&!plain(blocks))throw Error('显示区块配置损坏');const values=blocks?.[owner]??{};if(!plain(values)||Object.entries(values).some(([k,v])=>!displayFieldValid(appearanceFields(owner)[k],v)))throw Error(APPEARANCE_OWNERS[owner]+'配置损坏');return {...values};}
 export function appearanceValues(settings,owner){return {...base,...appearanceOverrides(settings,'general'),...defaults[owner],...appearanceOverrides(settings,owner)};}
 export function withAppearanceOverrides(settings,owner,value){appearanceOverrides({显示区块:{[owner]:value}},owner);return {...settings,显示区块:{...settings.显示区块,[owner]:{...value}}};}
 export function mountAppearanceSettings(document,container,{owner,getSettings,save,saveProfiles=async()=>{throw Error('外观方案保存接口未连接');},onStateChange=()=>{},externalActions=false}){

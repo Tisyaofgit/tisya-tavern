@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {createHash} from 'node:crypto';import {Window} from 'happy-dom';
 import {displayValues,displayOverrides,withDisplayOverrides,mountDisplaySettings,DISPLAY_DEFAULTS} from '../display-settings.js';
+import {appearanceValues,withAppearanceOverrides} from '../appearance-settings.js';
 import {readWorldExtra,mountWorldExtra,splitExtraDocuments} from '../world-extra.js';
 import {emotionCatalog,EMOTIONS,mountEmotionAtlas} from '../emotion-catalog.js';
 import {mountHeartBlock} from '../reply-details.js';import {registerPresetProtocol} from '../preset.js';
@@ -50,4 +51,12 @@ test('one decoded ten-emotion catalog feeds the atlas, every heart image and act
 test('missing and unknown emotion resources show an error; delayed old bindings cannot replace the current page or detached heart',async()=>{
  const one=ui();decodedImages(one.w,{missing:'怀疑'});const bad=emotionCatalog(one.d);await assert.rejects(bad.ready);assert.throws(()=>bad.names(),/加载失败/);const broken=mountHeartBlock(one.d,one.root,{status:'有内容',items:[{type:'剧情吐槽',text:'公开内容',mood:'开心'}]});await tick();assert.match(broken.textContent,/表情不可用/);assert.equal(broken.querySelector('img'),null);await one.w.happyDOM.abort();
  const two=ui();let release;decodedImages(two.w,{wait:{好奇:new Promise(r=>release=r)}});const heart=mountHeartBlock(two.d,two.root,{status:'有内容',items:[{type:'剧情吐槽',text:'一',mood:'好奇'},{type:'剧情吐槽',text:'二',mood:null}]});heart.querySelector('button').click();release();await emotionCatalog(two.d).ready;await assert.rejects(emotionCatalog(two.d).resolve('未收录表情'),/未收录/);await tick();assert.equal(heart.querySelector('img'),null);assert.equal(heart.dataset.mood,'');heart.querySelector('button').click();heart.remove();await tick();assert.equal(heart.querySelector('img'),null);await two.w.happyDOM.abort();
+});
+
+test('mount margin override validates as a ranged number across both display channels',()=>{
+ const s=withDisplayOverrides({},{楼层挂载范围:1600});assert.equal(displayValues(s).楼层挂载范围,1600);assert.deepEqual(displayOverrides(s),{楼层挂载范围:1600});
+ assert.throws(()=>withDisplayOverrides({},{楼层挂载范围:100}),/配置损坏/);assert.throws(()=>withDisplayOverrides({},{楼层挂载范围:4001}),/配置损坏/);assert.throws(()=>withDisplayOverrides({},{楼层挂载范围:'1600'}),/配置损坏/);
+ assert.equal(displayValues({}).楼层挂载范围,800);
+ const a=withAppearanceOverrides({},'extensions',{楼层挂载范围:400});assert.equal(appearanceValues(a,'extensions').楼层挂载范围,400);
+ assert.throws(()=>withAppearanceOverrides({},'extensions',{楼层挂载范围:99}),/配置损坏/);
 });

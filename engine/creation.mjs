@@ -1,6 +1,5 @@
-import {ensureSemanticFormSchema} from './form-semantics.mjs';
+import {ensureFormSchemas} from './form-semantics.mjs';
 import {createCreationTasks} from './creation-task.mjs';
-import {ensurePhoneFormSchema} from './phone-form-contract.mjs';
 import {clone,digest,fail} from './common.mjs';
 import {parseReply,envelope} from './reply.mjs';
 import {prepareMatrixSheets as prepareCreationSheets,acceptMatrixSheets,sheetSections,matrixSheetReferenceGraph,validateMatrixProposal as validateCreationProposal} from '../tables/foundation/engine.js';
@@ -100,7 +99,7 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
   const guard=scope(signal),explicitSource=clone(source);
   if(sourceBooks)check(!await pending(),'当前聊天有未完成创作，请先继续保存原草稿');guard();
   if(!repairContext)check(!tasks.repair()?.acceptance?.pending?.length,'当前创作仍有待修条目，请先继续修复；原文已保留');
-  await ensureDatabase();guard();await ensureSemanticFormSchema(database);guard();if(/手机|全初始化|完整初始化/.test(goal)){await ensurePhoneFormSchema(database);guard();}const snapshot=await database.read();guard();check(snapshot,'请先打开聊天并建立表单');
+  await ensureDatabase();guard();await ensureFormSchemas(database,{phone:/手机|全初始化|完整初始化/.test(goal)});guard();const snapshot=await database.read();guard();check(snapshot,'请先打开聊天并建立表单');
   const sources=await nativeSources(guard),templates=await readCreationTemplates(getContext,{task:'tableGenesis',kind,goal});guard();
   const operationId='creation:'+crypto.randomUUID(),identitySeed=repairContext?.identitySeed??operationId,sheets=prepareCreationSheets(snapshot,{kind,mode,operationId:identitySeed,tableIds:templates?.tableIds}),acceptedContext=new Map();
   if(repairContext){

@@ -68,7 +68,15 @@ test('same media ID concurrent imports cannot overwrite an already committed ori
     }) };
     return tx;
   } };
-  const context = { assetGet: async id => records.get(id) || null, openDb: async () => db, temporaryMedia: new Map(), Uint8Array };
+  const context = { assetGet: async id => records.get(id) || null, openDb: async () => db, temporaryMedia: new Map(), Uint8Array,
+    MEDIA_STORES: { previewAssets: 'phone-preview-assets' },
+    transact: (db, store, mode, work, { onError } = {}) => new Promise((resolve, reject) => {
+      let value; const tx = db.transaction(store, mode);
+      tx.oncomplete = () => resolve(value);
+      tx.onerror = () => reject(onError ? onError(tx.error) : (tx.error ?? new Error('事务失败')));
+      tx.onabort = () => reject(tx.error ?? new Error('事务已中止。'));
+      try { work(tx.objectStore(store), v => value = v, () => {}); } catch (error) { reject(error); }
+    }) };
   vm.createContext(context); vm.runInContext(source.slice(start, end) + '\nthis.auditedPut=assetPut;', context);
   const results = await Promise.allSettled([context.auditedPut('same-id', new Blob(['ORIGINAL'])), context.auditedPut('same-id', new Blob(['DIFFERENT']))]);
   assert.equal(await records.get('same-id').text(), 'ORIGINAL', '已保存媒体原件不能被同编号的不同字节覆盖');

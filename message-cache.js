@@ -1,5 +1,6 @@
 // Persistent derived message data. Never writes chat, variables or native frames.
 // Hot memory may evict freely; disk entries survive until their source is removed.
+import {openDatabase,transact} from './engine/idb-framework.mjs';
 export function messageCacheOwner(message){
  return JSON.stringify([message.send_date??null,message.name??null,message.is_user===true,message.is_system===true,message.role??null]);
 }
@@ -56,30 +57,19 @@ export function createMessageCache(window,{version,onError=()=>{},digest,timeout
  const fail=e=>{const first=state!=='failed';state='failed';error=e.message??String(e);if(first)onError(Error('逐条显示缓存不可用：'+error+'。原聊天未修改。'));};
  const ready=(async()=>{
   if(!window.indexedDB){state='unsupported';onError(Error('当前宿主不支持逐条显示缓存；原聊天未修改。'));return;}
-  db=await new Promise((resolve,reject)=>{
-   const open=window.indexedDB.open('tisya-render-cache',2);let done=false;
-   const stop=e=>{if(done)return;done=true;watch.stop();reject(e);};
-   const watch=watchTimeout('open',()=>stop(Error('缓存读取超时，已继续显示原消息')));
-   open.onupgradeneeded=()=>{const d=open.result;if(d.objectStoreNames.contains('snapshots'))d.deleteObjectStore('snapshots');if(!d.objectStoreNames.contains('messages')){const s=d.createObjectStore('messages',{keyPath:'id'});s.createIndex('scope','scope');}};
-   open.onblocked=()=>stop(Error('显示缓存升级被旧窗口占用，请关闭旧窗口后重试'));
-   open.onerror=()=>stop(open.error??Error('无法打开显示缓存'));
-   open.onsuccess=()=>{if(done){open.result.close();return;}done=true;watch.stop();resolve(open.result);};
-  });
+  db=await openDatabase({indexedDB:window.indexedDB,name:'tisya-render-cache',version:2,label:'显示缓存',watchFor:(phase,onTimeout)=>watchTimeout(phase,onTimeout),
+   schema:d=>{if(d.objectStoreNames.contains('snapshots'))d.deleteObjectStore('snapshots');if(!d.objectStoreNames.contains('messages')){const s=d.createObjectStore('messages',{keyPath:'id'});s.createIndex('scope','scope');}},
+   messages:{open:e=>e??Error('无法打开显示缓存'),blocked:()=>Error('显示缓存升级被旧窗口占用，请关闭旧窗口后重试'),timeout:()=>Error('缓存读取超时，已继续显示原消息')},
+   onVersionChange:()=>{db=null;state='closed';onError(Error('显示缓存版本已变更，请重新加载扩展。'));}});
   if(closed){db.close();db=null;return;}
-  db.onversionchange=()=>{db.close();db=null;state='closed';onError(Error('显示缓存版本已变更，请重新加载扩展。'));};
   state='ready';
  })().catch(fail);
  const allowed=(inv,owner,source)=>{const row=inv.owners.get(owner);return row?row.cold||row.sources.has(source):!inv.complete;};
  const eligible=(scope,owner,source)=>{const inv=inventories.get(scope);return inv?allowed(inv,owner,source):!knownScopes.has(scope);};
- function transaction(mode,work,phase=mode){return new Promise((resolve,reject)=>{
-  if(!db){reject(Error('缓存尚不可用'));return;}
-  const tx=db.transaction('messages',mode);let value,done=false;
-  const finish=(error)=>{if(done)return;done=true;watch.stop();error?reject(error):resolve(value);};
-  const watch=watchTimeout(phase,()=>{finish(Error('显示缓存事务超时（'+phase+'）'));try{tx.abort();}catch{}});
-  const progress=()=>watch.progress();
-  tx.oncomplete=()=>finish();tx.onerror=()=>finish(tx.error??Error('缓存事务失败'));tx.onabort=()=>finish(tx.error??Error('缓存事务中止'));
-  try{work(tx.objectStore('messages'),v=>value=v,progress);}catch(e){finish(e);try{tx.abort();}catch{}}
- });}
+ function transaction(mode,work,phase=mode){
+  if(!db)return Promise.reject(Error('缓存尚不可用'));
+  return transact(db,'messages',mode,work,{label:'显示缓存事务',phase,watchFor:(p,onTimeout)=>watchTimeout(p,onTimeout)});
+ }
 
  function enqueue(work){const operation=tail.then(async()=>{await ready;if(closed||state!=='ready'||!db)return;return work();});tail=operation.catch(fail);return tail;}
  async function key(scope,owner,source){return JSON.stringify([scope,await hash(JSON.stringify([version,owner,source]))]);}

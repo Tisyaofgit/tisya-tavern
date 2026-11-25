@@ -2,14 +2,21 @@ import {CHAT_DEFAULTS,CHAT_FIELDS,JOURNEY_DEFAULTS,JOURNEY_FIELDS} from './visua
 
 // Global display preferences belong to the existing native extension settings.
 // Only explicit overrides are stored. Original registered defaults stay read-only.
-export const DISPLAY_DEFAULTS=Object.freeze({...CHAT_DEFAULTS,...JOURNEY_DEFAULTS});
-export const DISPLAY_FIELDS=Object.freeze({...CHAT_FIELDS,...JOURNEY_FIELDS});
+// Numeric display fields ride the same override channel as enum fields: the
+// rule object carries its valid range, and renderers draw a number input.
+export const DISPLAY_NUMBER_FIELDS=Object.freeze({楼层挂载范围:Object.freeze({min:200,max:4000})});
+export const DISPLAY_DEFAULTS=Object.freeze({...CHAT_DEFAULTS,...JOURNEY_DEFAULTS,楼层挂载范围:800});
+export const DISPLAY_FIELDS=Object.freeze({...CHAT_FIELDS,...JOURNEY_FIELDS,...DISPLAY_NUMBER_FIELDS});
 const plain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
+export function displayFieldValid(rule,value){
+ if(Array.isArray(rule))return rule.includes(value);
+ return !!rule&&Number.isSafeInteger(value)&&value>=rule.min&&value<=rule.max;
+}
 export function displayOverrides(settings){
  const blocks=settings.显示区块;if(blocks===undefined)return {};
  if(!plain(blocks))throw Error('显示区块配置损坏');
  const values=blocks.extensions;if(values===undefined)return {};
- if(!plain(values)||Object.entries(values).some(([k,v])=>!({...DISPLAY_FIELDS,装饰程度:['简洁','标准','丰富'],动画效果:[true,false]})[k]?.includes(v)))throw Error('聊天显示配置损坏；未使用默认值覆盖');
+ if(!plain(values)||Object.entries(values).some(([k,v])=>!displayFieldValid({...DISPLAY_FIELDS,装饰程度:['简洁','标准','丰富'],动画效果:[true,false]}[k],v)))throw Error('聊天显示配置损坏；未使用默认值覆盖');
  return {...values};
 }
 export function displayValues(settings){return {...DISPLAY_DEFAULTS,...displayOverrides(settings)};}
@@ -23,7 +30,12 @@ export function mountDisplaySettings(document,container,{getSettings,save,onAppl
  const form=make('form'),fields=new Map(),status=make('p');status.setAttribute('role','status');form.className='tisya-display-settings';
  const initial=JSON.parse(base);
  for(const [key,values]of Object.entries(DISPLAY_FIELDS)){
-  const label=make('label',key),select=make('select');select.setAttribute('aria-label',key);
+  const label=make('label',key);
+  if(!Array.isArray(values)){
+   const input=make('input');input.type='number';input.min=values.min;input.max=values.max;input.setAttribute('aria-label',key);input.placeholder='继承 · '+DISPLAY_DEFAULTS[key];if(Object.hasOwn(initial,key))input.value=String(initial[key]);
+   label.append(input);form.append(label);fields.set(key,input);continue;
+  }
+  const select=make('select');select.setAttribute('aria-label',key);
   const text=v=>typeof v==='boolean'?(v?'开启':'关闭'):v;
   const option=(label,value)=>{const n=make('option',label);n.value=value;return n;};
   select.append(option('继承 · '+text(DISPLAY_DEFAULTS[key]),''));
@@ -38,7 +50,7 @@ export function mountDisplaySettings(document,container,{getSettings,save,onAppl
   let draft;
   try{
    if(JSON.stringify(displayOverrides(getSettings()))!==base)throw Error('显示配置已在其他位置修改，请重新打开此页后再应用。');
-   draft=Object.fromEntries([...fields].filter(([,s])=>s.value!=='').map(([k,s])=>[k,DISPLAY_FIELDS[k][Number(s.value)]]));
+   draft=Object.fromEntries([...fields].filter(([,s])=>s.value!=='').map(([k,s])=>[k,Array.isArray(DISPLAY_FIELDS[k])?DISPLAY_FIELDS[k][Number(s.value)]:Number(s.value)]));
    await save(draft);if(!alive)return;base=JSON.stringify(displayOverrides(getSettings()));onApplied();status.textContent='已应用并保存。';
   }catch(error){if(alive){try{if(draft&&JSON.stringify(displayOverrides(getSettings()))===JSON.stringify(draft))base=JSON.stringify(draft);}catch(readError){error=new Error(error.message+'；'+readError.message);}status.textContent=error.message;status.setAttribute('role','alert');}}
   finally{if(alive){busy=false;apply.disabled=false;reset.disabled=false;}}

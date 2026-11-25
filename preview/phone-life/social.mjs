@@ -16,15 +16,15 @@ export function socialSeed(){
    comments:[{id:'c-seed',postId:'p-me',authorId:'yu',text:'懂。现在在风里等车。',createdAt:{day:9,minute:1028}}],
    notifications:[{id:'n-seed',kind:'social.comment',recipientId:'me',actorId:'yu',postId:'p-me',text:'余舟评论了你的微博',seen:false,withdrawn:false}],pending:[]},
   media:{photos:[
-   {id:'photo-city',name:'晚风经过街口',ownerId:'yu',visibility:'public',source:'illustration',art:'city'},
-   {id:'photo-coffee',name:'靠窗的位置',ownerId:'cafe',visibility:'public',source:'illustration',art:'coffee'},
-   {id:'photo-me-city',name:'走过的街道',ownerId:'me',visibility:'private',source:'illustration',art:'city'},
-   {id:'photo-me-night',name:'晚安之前',ownerId:'me',visibility:'private',source:'illustration',art:'night'},
-   {id:'photo-me-day',name:'今天的小片刻',ownerId:'me',visibility:'private',source:'illustration',art:'photo'},
-   {id:'photo-alt',name:'只留给自己的相片',ownerId:'alt',visibility:'private',source:'illustration',art:'night'}],
-   songs:[{id:'song-night',title:'夜色经过',artist:'余舟',album:'城市短篇',cover:'night',audioId:null},
-    {id:'song-home',title:'回家那一段路',artist:'林间',album:'未完成的日记',cover:'city',audioId:null},
-    {id:'song-window',title:'窗边的下午',artist:'日落咖啡',album:'店里的歌',cover:'coffee',audioId:null}],
+   {id:'photo-city',name:'晚风经过街口',ownerId:'yu',visibility:'public',source:'art',art:'city'},
+   {id:'photo-coffee',name:'靠窗的位置',ownerId:'cafe',visibility:'public',source:'art',art:'coffee'},
+   {id:'photo-me-city',name:'走过的街道',ownerId:'me',visibility:'private',source:'art',art:'city'},
+   {id:'photo-me-night',name:'晚安之前',ownerId:'me',visibility:'private',source:'art',art:'night'},
+   {id:'photo-me-day',name:'今天的小片刻',ownerId:'me',visibility:'private',source:'art',art:'photo'},
+   {id:'photo-alt',name:'只留给自己的相片',ownerId:'alt',visibility:'private',source:'art',art:'night'}],
+   songs:[{id:'song-night',title:'夜色经过',artist:'余舟',album:'城市短篇',cover:'night',audioId:null,ownerId:'yu',visibility:'public'},
+    {id:'song-home',title:'回家那一段路',artist:'林间',album:'未完成的日记',cover:'city',audioId:null,ownerId:'me',visibility:'public'},
+    {id:'song-window',title:'窗边的下午',artist:'日落咖啡',album:'店里的歌',cover:'coffee',audioId:null,ownerId:'cafe',visibility:'public'}],
    playlists:[{id:'playlist-evening',name:'晚上慢慢听',songIds:['song-night','song-home']}],favoritePhotos:[],favoriteSongs:[]}
  };
 }

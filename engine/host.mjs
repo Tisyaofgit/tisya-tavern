@@ -55,7 +55,7 @@ function turnArchiveIssue(journal,entry){
  const warning=entry.warnings.find(w=>w.source_key===sourceKey&&/^ARCHIVE_/.test(w.code??'')&&w.code!=='ARCHIVE_DECLARED_PENDING');
  return warning?warning.error?.message??warning.message??null:null;
 }
-export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignature=null,storage=null,persistSettings,persistMetadata,persona=()=>'',getHistoryLimit=()=>50,projectToolTurns,getContractorMessages=async()=>[],getDisplayRules=()=>[],nativeSources=null,expand=s=>s,assertIdle=()=>{},onError=()=>{},manualReview=false,request=null,archiveBooks=null,retryBinding=null,requestTransport=null}){
+export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignature=null,storage=null,persistSettings,persistMetadata,persona=()=>'',getHistoryLimit=()=>50,projectToolTurns,getContractorMessages=async()=>[],getDisplayRules=()=>[],nativeSources=null,expand=s=>s,assertIdle=()=>{},onError=()=>{},manualReview=false,request=null,archiveBooks=null,retryBinding=null,requestTransport=null,chatExists=null}){
  let storageOwner;storage??={get:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).get(...a),set:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).set(...a),commit:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).commit(...a),stat:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).stat(...a),workspaceToken:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).workspaceToken(...a)};
  let pendingRevision=null,pendingUserRevision=null;let catalogPromise,prepared=null,latest=null,slots={},busy=false,referenceSnapshot=null,narrativeLoreSnapshot=null,warmProjection=null,preparedTurn=null,peekBatch=null;const listeners=new Set();
  const catalogCacheWarning=error=>{try{onError(Error('表单目录缓存不可用，已使用正式目录：'+error.message));}catch{}};
@@ -107,7 +107,7 @@ export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignat
   if(!value?.bundle?.state?.schema||!value.bundle.state.tables)return null;
   return {...value,preview:false,unchanged:true,workspaceRestored:true};
  }
- const controller=new Controller({getContext:ctx,storage,onUpdate:notify,restore:async({id,messages})=>restoreFinal(id,ctx(),messages),request:async(_path,{bundle,messages,scope})=>{
+ const controller=new Controller({getContext:ctx,storage,onUpdate:notify,chatExists,restore:async({id,messages})=>restoreFinal(id,ctx(),messages),request:async(_path,{bundle,messages,scope})=>{
   const id=ctx().chatMetadata?.[NS]?.chat_uid,proof=phoneProof(ctx());return projectFinal(id,bundle,messages,scope,proof);
  }});
  controller.inject=async()=>{ctx().setExtensionPrompt?.(PROMPT_KEY,'',0,0,false,0);};

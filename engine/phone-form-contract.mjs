@@ -1,6 +1,5 @@
 // Author-facing phone fields extend the existing tables. The runtime codec and
 // form parser share this contract; no second initialization store is created.
-import {digest} from './common.mjs';
 export const PHONE_FORM_FIELDS=Object.freeze({
  X_PHONE_WORLD_CONFIG:{active_account_ref:['当前本人账号','REF','X_SOCIAL_ACCOUNTS'],default_account_ref:['默认付款账户','REF','X_FIN_ACCOUNTS'],funding_account_ref:['默认收支账户','REF','X_FIN_ACCOUNTS'],walk_speed:['步行速度','NUMBER'],bike_speed:['骑行速度','NUMBER'],transit_speed:['公共交通速度','NUMBER'],quote_minutes:['报价有效故事分钟','INTEGER'],minimum_shop:['商城起送金额','INTEGER'],minimum_food:['外卖起送金额','INTEGER'],phone_number:['本人手机号','TEXT']},
  X_PHONE_LOAN_RULES:{annualRateBps:['年利率基点','INTEGER'],terms:['可选期数','ARRAY'],periodDays:['每期故事天数','INTEGER'],periodsPerYear:['每年计息期数','INTEGER'],minAmount:['最低本金','INTEGER'],maxAmount:['最高本金','INTEGER']},
@@ -32,12 +31,6 @@ export function extendPhoneFormCatalog(catalog){
  const missing=PHONE_FORM_SCHEMAS.some(add=>{const old=catalog.tables.find(t=>t.id===add.id);return !old||add.fields.some(field=>!old.fields.some(f=>f.key===field.key));});
  if(!missing)return catalog;
  const copy=structuredClone(catalog);for(const add of PHONE_FORM_SCHEMAS){const old=copy.tables.find(t=>t.id===add.id);if(!old)copy.tables.push(structuredClone(add));else for(const field of add.fields)if(!old.fields.some(f=>f.key===field.key))old.fields.push(structuredClone(field));}return copy;
-}
-export async function ensurePhoneFormSchema(database){
- const current=await database.read();if(!current)return null;
- const missing=PHONE_FORM_SCHEMAS.filter(t=>!current.state.schema[t.id]||t.fields.some(f=>!current.state.schema[t.id].fields.some(x=>x.key===f.key)));
- if(!missing.length)return current;
- return database.commit({operationId:'phone-form-schema:'+digest(missing),contextKey:current.contextKey,expectedRevision:current.revision,changes:[],schema:missing,source:{kind:'form-schema',purpose:'phone-initialization'}});
 }
 const refs={
  X_PHONE_WORLD_CONFIG:{currency_ref:'T_STATIC_ITEMS_SKILLS',active_account_ref:'X_SOCIAL_ACCOUNTS',default_account_ref:'X_FIN_ACCOUNTS',funding_account_ref:'X_FIN_ACCOUNTS'},

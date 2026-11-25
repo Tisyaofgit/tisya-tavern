@@ -20,11 +20,24 @@ test('adopt freezes committed evidence and flush covers hashing plus persistence
 });
 
 test('queued adopts retain only the latest full snapshot and flush persists it last',async()=>{
- const disk=new Map(),writes=[];let release,started,sets=0;const gate=new Promise(resolve=>release=resolve),firstWrite=new Promise(resolve=>started=resolve);
- const storage={get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>{sets++;if(sets===1){started();await gate;}writes.push(value.value.materials.name);disk.set(key,structuredClone(value));}},cache=createFinalProjectionCache({storage});
- cache.adopt('chat',{bundle:{revision:1}},{materials:{name:'第一份'}});cache.adopt('chat',{bundle:{revision:2}},{materials:{name:'被取代'}});cache.adopt('chat',{bundle:{revision:3}},{materials:{name:'最新'}});await firstWrite;
- let flushed=false;const pending=cache.flush().then(()=>{flushed=true;});await new Promise(resolve=>setTimeout(resolve,0));assert.equal(flushed,false);release();await pending;
- assert.deepEqual(writes,['第一份','最新']);const cold=createFinalProjectionCache({storage});assert.equal((await cold.project('chat',{bundle:{revision:3}},()=>{throw Error('latest adopted input must not recompute');})).materials.name,'最新');
+ const disk=new Map(),writes=[];
+ const storage={get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>{writes.push(value.value.materials.name);disk.set(key,structuredClone(value));}},cache=createFinalProjectionCache({storage});
+ await cache.adopt('chat',{bundle:{revision:1}},{materials:{name:'第一份'}});await cache.adopt('chat',{bundle:{revision:2}},{materials:{name:'被取代'}});await cache.adopt('chat',{bundle:{revision:3}},{materials:{name:'最新'}});
+ assert.deepEqual(writes,[],'commits only dirty-mark; no snapshot write before the boundary flush');await cache.flush();
+ assert.deepEqual(writes,['最新']);const cold=createFinalProjectionCache({storage});assert.equal((await cold.project('chat',{bundle:{revision:3}},()=>{throw Error('latest adopted input must not recompute');})).materials.name,'最新');
+});
+
+test('dirty projections persist through the trailing timer without an explicit flush',async()=>{
+ const disk=new Map(),storage={get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>disk.set(key,structuredClone(value))},cache=createFinalProjectionCache({storage,persistDelay:5});
+ await cache.adopt('chat',{bundle:{revision:1}},{materials:{name:'阿青'}});assert.equal(disk.has('derived:final-projection:chat'),false);assert.equal(cache.report().unsaved,1);
+ await new Promise(resolve=>setTimeout(resolve,60));assert.equal(disk.get('derived:final-projection:chat').value.materials.name,'阿青');assert.equal(cache.report().unsaved,0);
+});
+
+test('a reload inside the dirty window falls back to authoritative recomputation',async()=>{
+ const disk=new Map(),storage={get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>disk.set(key,structuredClone(value))};let computes=0;
+ const first=createFinalProjectionCache({storage});await first.adopt('chat',{bundle:{revision:1}},{materials:{name:'阿青'}});
+ const cold=createFinalProjectionCache({storage});assert.deepEqual(await cold.project('chat',{bundle:{revision:1}},()=>{computes++;return {materials:{name:'重算'}};}),{materials:{name:'重算'}});assert.equal(computes,1);await cold.flush();
+ assert.equal((await createFinalProjectionCache({storage}).project('chat',{bundle:{revision:1}},()=>{throw Error('flushed input must not recompute');})).materials.name,'重算');
 });
 
 test('persistent entries can contain derived materials only while cold restore reattaches the authoritative projection',async()=>{
@@ -91,6 +104,6 @@ test('hot workspace restore does not wait for full hashing and a stale adopt can
  const disk=new Map(),heads=new Map([['chat',{format:'tisya.workspace-head/1',owner:'chat',revision:2,token:'head-b'}]]);let release;const gate=new Promise(resolve=>release=resolve);let sets=0;
  const storage={stat:async key=>structuredClone(heads.get(key)),get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>{sets++;if(sets===1)await gate;disk.set(key,structuredClone(value));}},cache=createFinalProjectionCache({storage});
  const input={bundle:{local_revision:2},messages:[{uid:'m',text:'正文'}],proof:{contextKey:'chat'}},pending=cache.adopt('chat',input,{bundle:input.bundle,materials:{name:'即时工作区'}});
- assert.equal((await cache.restore('chat',{messages:input.messages,proof:input.proof})).materials.name,'即时工作区');release();await pending;
- heads.set('chat',{format:'tisya.workspace-head/1',owner:'chat',revision:3,token:'head-c'});await cache.adopt('chat',{...input,bundle:{local_revision:2}},{bundle:{local_revision:2},materials:{name:'过期'}});assert.equal(disk.get('derived:final-projection:chat').value.materials.name,'即时工作区');
+ assert.equal((await cache.restore('chat',{messages:input.messages,proof:input.proof})).materials.name,'即时工作区');release();await pending;await cache.flush();
+ heads.set('chat',{format:'tisya.workspace-head/1',owner:'chat',revision:3,token:'head-c'});await cache.adopt('chat',{...input,bundle:{local_revision:2}},{bundle:{local_revision:2},materials:{name:'过期'}});await cache.flush();assert.equal(disk.get('derived:final-projection:chat').value.materials.name,'即时工作区');
 });
