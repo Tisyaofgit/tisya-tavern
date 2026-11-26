@@ -1,4 +1,5 @@
 import {compactCreationSchema} from './prompt-boundary.mjs';
+import {mountTagPackEditor} from './tag-pack-ui.mjs';
 const copy=value=>structuredClone(value);
 const phases={preparing:'正在读取来源与模板',streaming:'缇斯亚正在创作',ready:'草稿已就绪，等待你核对',error:'这次创作没有完成',cancelled:'已停止，已收到的内容保留'};
 export const creationTaskRunning=task=>['preparing','streaming'].includes(task?.status);
@@ -107,7 +108,7 @@ export function mountCreationTable(document,root,{proposal,schema={},fieldTexts=
   const spec=schema[change.tableId],section=el('section');section.dataset.creationTable=change.tableId;section.append(el('h4',(spec?.label??change.tableId)+' · '+(change.values.name??change.values.label??'记录 '+(index+1))));
   const table=el('table');table.className='tisya-creation-table';const head=el('thead'),headRow=el('tr');headRow.append(el('th','项目'),el('th','内容'));head.append(headRow);table.append(head);const body=el('tbody');
   const opened=openedFields.get(index)??new Set(),keys=[...new Set([...Object.keys(change.values),...opened])];
-  for(const key of keys){const value=change.values[key],def=spec?.fields?.find(field=>field.key===key),row=el('tr'),label=el('th',def?.label??key),cell=el('td');label.scope='row';const rule=el('div',[def?.description??def?.help??'',def?.required?'必填':'',def?.type?'类型：'+def.type:''].filter(Boolean).join(' · '));rule.className='tisya-creation-field-rule';label.append(rule);cell.append(editValue(value,{index,key,def,set:next=>{if(next===undefined){delete change.values[key];if(change.states)delete change.states[key];}else{change.values[key]=next;if(change.states?.[key]&&next!==null)change.states[key]='known';}}}));
+  for(const key of keys){const value=change.values[key],def=spec?.fields?.find(field=>field.key===key),row=el('tr'),label=el('th',def?.label??key),cell=el('td');label.scope='row';const rule=el('div',[def?.description??def?.help??'',def?.required?'必填':'',def?.type?'类型：'+def.type:''].filter(Boolean).join(' · '));rule.className='tisya-creation-field-rule';label.append(rule);cell.append(editValue(value,{index,key,def,set:next=>{if(next===undefined){delete change.values[key];if(change.states)delete change.states[key];}else{change.values[key]=next;if(change.states?.[key]&&next!==null)change.states[key]='known';}}}));if(key==='tag_pack_json'&&value)mountTagPackEditor(document,cell,{value,world:{...change.values,id:change.recordId},onChange:next=>{change.values[key]=next;change.values.tag_pack_user_edits='user';onChange(proposal);}});
    if(opened.has(key)){const omit=button('撤回本次补填',()=>{const hadValue=Object.hasOwn(change.values,key);delete change.values[key];if(change.states)delete change.states[key];opened.delete(key);clearPathState(index,key,[]);if(hadValue)onChange(proposal);draw();});omit.dataset.creationOmitField=key;cell.append(omit);}
    row.append(label,cell);body.append(row);}
   table.append(body);section.append(table);

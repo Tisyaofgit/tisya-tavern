@@ -11,3 +11,7 @@ Keep the initial context small. Read this file and the current work item first. 
 - Async diagnostic blocks distinguish `collecting`, `available`, `empty`, `unavailable`, `error`, and `timeout`. Enable copy/export only at terminal states. Closing the page, changing candidates, or switching chats invalidates late results; late disposable values still require cleanup.
 - Diagnostic regressions cover privacy canaries, empty/error/timeout states, stale completion, copy/export contents, and unchanged business state. Synthetic checks never substitute for real host, model, or Android acceptance.
 - Before a handoff, record the verified revision, any unpublished changes, the last passing check, and the next reproducible step. Keep that note short and replace outdated status instead of appending a new session transcript.
+
+## Matrix persistence rule
+
+New modules reuse the Matrix persistent workspace, unified Runtime/CAS transaction, and backup/write zones by default. Do not add a second database, an independent settings repository, or an in-memory cache as a substitute for persistence. Persist derived indexes incrementally: archived projections stay in the backup index zone; current additions, edits, and deletions enter the write zone and commit or roll back with their business changes. Build the baseline once, then process only touched records and required associations. User preferences, including cross-story defaults, use the same Matrix storage and transaction services.

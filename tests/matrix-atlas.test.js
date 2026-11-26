@@ -7,6 +7,7 @@ import {Runtime} from '../engine/runtime.mjs';
 import {createMatrixAtlas,readMatrixAtlasSnapshot} from '../tables/matrix-atlas.js';
 import {mountArchiveAtlas} from '../tables/atlas-ui.js';
 import {createTableService} from '../tables/service.js';
+import {updateMatrixAtlasIndex} from '../tables/matrix-atlas-index.mjs';
 
 function snapshot(){
  const e=new Runtime(initializeState(catalog,{session_ref:'atlas',branch_ref:'main'}));
@@ -81,12 +82,13 @@ test('atlas projects list atoms as readable meanings and resolves object atoms t
 });
 
 test('actual table-service atlas selects the shared database without requiring legacy worldbooks',async()=>{
- let current=snapshot(),subscribed=null;
- const service=createTableService({store:{read:()=>({key:'atlas',world:{}})},getContext:()=>({chatId:'atlas'}),request:()=>{throw Error('no model call');},books:{read(){throw Error('must not read old ledger');}},matrixDatabase:{read:async()=>structuredClone(current),commit(){throw Error('atlas must stay read only');}},matrixHost:{subscribe(fn){subscribed=fn;return ()=>{subscribed=null;};}}});
+ let current=snapshot(),subscribed=null,bootstraps=0;
+ const service=createTableService({store:{read:()=>({key:'atlas',world:{}})},getContext:()=>({chatId:'atlas'}),request:()=>{throw Error('no model call');},books:{read(){throw Error('must not read old ledger');}},matrixDatabase:{read:async()=>structuredClone(current),commit:async request=>{assert.deepEqual(request.changes,[]);assert.equal(request.expectedRevision,current.revision);assert.equal(request.contextKey,current.contextKey);const e=new Runtime(current.state);updateMatrixAtlasIndex(e,{operationId:request.operationId,revision:current.revision+1,changes:request.changes});current={...current,state:e.data,revision:current.revision+1};bootstraps++;return structuredClone(current);}},matrixHost:{subscribe(fn){subscribed=fn;return ()=>{subscribed=null;};}}});
  let notified=0;const off=service.subscribeArchive(()=>notified++);subscribed();assert.equal(notified,1);off();assert.equal(subscribed,null);
- const view=await service.readAtlasSnapshot();assert(view.data.matrix);assert(view.data.matrixAtlas.list().total>0);await view.verify();
+ const view=await service.readAtlasSnapshot();assert(view.data.matrix);assert(view.data.matrixAtlas.list().total>0);assert.equal(bootstraps,1);await view.verify();
+ const reopened=await service.readAtlasSnapshot();assert.equal(bootstraps,1,'cold reopen reads the persisted baseline without rebuilding');assert.equal(reopened.data.matrixAtlas.list().total,view.data.matrixAtlas.list().total);
  current.state.tables.T_DYN_EVENTS.e.values.title='同修订的另一候选';await assert.rejects(view.verify(),/档案已变化/);
- current=snapshot();const other=await service.readAtlasSnapshot();current.contextKey='another';await assert.rejects(other.verify(),/会话或档案/);
+ current=snapshot();const other=await service.readAtlasSnapshot();assert.equal(bootstraps,2);current.contextKey='another';await assert.rejects(other.verify(),/会话或档案/);
 });
 
 test('shared UI combines search and categories, restores empty results, and changes layout',async()=>{

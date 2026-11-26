@@ -9,12 +9,8 @@ const entityTypes={character:'people',place:'places',organization:'factions',ite
 const shown=(record,key)=>['known','derived'].includes(record.states?.[key])?record.values?.[key]:undefined;
 const atlasInternalFields=new Set(['owner_table','owner_form','owner_row_uuid','owner_field','sequence','item_type','value_state']);
 
-// Disposable view of the canonical Matrix database. Never writes a second
-// archive, guesses references from prose, or promotes staged memory to facts.
-export function createMatrixAtlas(snapshot,{scope={...snapshot.state.runtime?.scope,audience:'author'}}={}){
- const {state}=snapshot,meta=new Map(Object.values(state.tables.X_RECORD_META??{}).map(r=>[r.values.table_id+'#'+r.values.record_id,r.values])),records=new Map();
- for(const [tid,rows]of Object.entries(state.tables))for(const [rid,record]of Object.entries(rows)){
-  if(!matrixRecordVisible(state,tid,rid,scope,meta))continue;
+export function projectMatrixAtlasRecord(snapshot,scope,meta,tid,rid){
+ const {state}=snapshot,record=state.tables[tid]?.[rid];if(!record||!matrixRecordVisible(state,tid,rid,scope,meta))return null;
   const schema=state.schema[tid],id=tid+'#'+rid,labels=new Map(),values={},paths=[],keys={},definitions={};
   for(const f of schema.fields){
    if(!matrixFieldVisible(f,record,scope,tid,state,rid)||!modelFieldAllowed(f,schema,'main')||atlasInternalFields.has(f.key)||!Object.hasOwn(record.values,f.key))continue;
@@ -37,7 +33,14 @@ export function createMatrixAtlas(snapshot,{scope={...snapshot.state.runtime?.sc
   const source=record.metadata?.archive_source;
   if(source&&scope.audience==='author')values['正文来源']={回复:source.entry_id,修订:source.revision,段落:clone(source.paragraphs??[])};
   const object=Object.hasOwn(rootTypes,tid)||tid==='T_SYS_ENTITIES';
-  records.set(id,{id,sourceTable:tid,recordId:rid,table:object?'objects':tid==='T_DYN_EVENTS'?'events':tid,rev:meta.get(id)?.record_revision??snapshot.revision,values:{...values,名称:String(name),描述:String(description)},definitions,paths,keys,category,kind:schema.label??tid,card:!['T_DYN_EVENT_LINKS','T_DYN_EVENT_PARTICIPANTS'].includes(tid)&&schema.partition!=='M'&&(!schema.record_kind?.startsWith('registration_')||tid==='T_SYS_ENTITIES')});
+  return [id,{id,sourceTable:tid,recordId:rid,table:object?'objects':tid==='T_DYN_EVENTS'?'events':tid,rev:meta.get(id)?.record_revision??snapshot.revision,values:{...values,名称:String(name),描述:String(description)},definitions,paths,keys,category,kind:schema.label??tid,card:!['T_DYN_EVENT_LINKS','T_DYN_EVENT_PARTICIPANTS'].includes(tid)&&schema.partition!=='M'&&(!schema.record_kind?.startsWith('registration_')||tid==='T_SYS_ENTITIES')}];
+};
+// Disposable or persisted-index view of the canonical Matrix database. The
+// index is derived inside Matrix; it never becomes a second archive.
+export function createMatrixAtlas(snapshot,{scope={...snapshot.state.runtime?.scope,audience:'author'},indexedRecords=null}={}){
+ const {state}=snapshot,meta=new Map(Object.values(state.tables.X_RECORD_META??{}).map(r=>[r.values.table_id+'#'+r.values.record_id,r.values])),records=new Map(indexedRecords??[]);
+ if(!indexedRecords)for(const [tid,rows]of Object.entries(state.tables))for(const rid of Object.keys(rows)){
+  const projected=projectMatrixAtlasRecord(snapshot,scope,meta,tid,rid);if(projected)records.set(...projected);
  }
  // A typed list atom is a readable value, not a destination exposing its
  // storage coordinates. Atoms pointing at a real object resolve straight to
@@ -131,10 +134,12 @@ export function createMatrixAtlas(snapshot,{scope={...snapshot.state.runtime?.sc
  };
 }
 
+
+// Synthetic/read-only adapters may not have a writable Matrix workspace. The
+// production service uses readPersistentMatrixAtlas(); this fallback performs
+// no caching and never pretends that a derived index was persisted.
 export async function readMatrixAtlasSnapshot(database){
  const snapshot=await database.read();if(!snapshot)fail('ENGINE_NOT_BOUND','请先接入当前会话表单');
  const atlas=createMatrixAtlas(snapshot),scope=snapshot.state.runtime?.scope??{};let stamp=null;
- return {data:{live:true,matrix:true,world:scope.world_ref??'当前世界',branch:scope.branch_ref??'当前线路',revision:snapshot.revision,matrixAtlas:atlas,layers:[['session','当前存档']],navigation:['atlas','timeline'],trace:[]},async verify(){
-  const current=await database.read();stamp??=JSON.stringify(snapshot.state);if(!current||current.contextKey!==snapshot.contextKey||current.revision!==snapshot.revision||JSON.stringify(current.state)!==stamp)fail('ATLAS_STALE','当前会话或档案已变化，请刷新图鉴');
- }};
+ return {data:{live:true,matrix:true,world:scope.world_ref??'当前世界',branch:scope.branch_ref??'当前线路',revision:snapshot.revision,matrixAtlas:atlas,layers:[['session','当前存档']],navigation:['atlas','timeline'],trace:[]},async verify(){const current=await database.read();stamp??=JSON.stringify(snapshot.state);if(!current||current.contextKey!==snapshot.contextKey||current.revision!==snapshot.revision||JSON.stringify(current.state)!==stamp)fail('ATLAS_STALE','当前会话或档案已变化，请刷新图鉴');}};
 }

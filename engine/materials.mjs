@@ -19,6 +19,8 @@ import {extendOffstageCatalog} from './offstage-life.mjs';
 import {extendFieldHistoryCatalog} from './field-history.mjs';
 import {extendPreferenceCatalog} from './preference-editor.mjs';
 import {extendMediaCatalog} from './media-form-contract.mjs';
+import {extendTagCatalog} from './tag-catalog.mjs';
+import {extendAtlasIndexCatalog} from '../tables/atlas-index-catalog.mjs';
 import {createParameterRegistry} from './parameter-registry.mjs';
 import {PHONE_FORM_TEMPLATES,PHONE_APP_NAMES} from './form-template-routing.mjs';
 const routes={'世界与规则':'world_context','类型与物品':'asset_context','地点与交通':'location_context','组织与制度':'faction_context','场景与环境':'current_state','状态与成长':'current_state','持有与交易':'current_state','关系与约定':'current_state','人物原点':'focus_entities','人物细节':'focus_entities','认知与情报':'knowledge_material','历史与记忆':'memory_archive','任务与调度':'pending_tasks','生产与设施':'current_state','冲突与检定':'current_state','创世与跨世界':'cardflow','规则与执行':'cell_prompts','宿主与投影':'display_material','运行与归档':'offstage_state'};
@@ -42,7 +44,7 @@ export function materialFormTables(e,blocks,context={}){
  return [...selected].filter(id=>e.data.schema[id]&&mainFormTable(id,e.data.schema[id]));
 }
 export function extendMatrixCatalog(catalog){
- return extendMediaCatalog(extendPreferenceCatalog(extendFieldHistoryCatalog(extendSemanticCatalog(extendOffstageCatalog(extendAttitudeCatalog(extendPhoneFormCatalog(catalog)))))));
+ return extendAtlasIndexCatalog(extendTagCatalog(extendMediaCatalog(extendPreferenceCatalog(extendFieldHistoryCatalog(extendSemanticCatalog(extendOffstageCatalog(extendAttitudeCatalog(extendPhoneFormCatalog(catalog)))))))));
 }
 export function initializeState(catalog,scope={}){
  catalog=extendMatrixCatalog(catalog);

@@ -523,7 +523,7 @@ async function openSettings(tab='play',initialView=''){
  if(!context().chatId){renderEpoch++;page('缇斯亚功能','<section class="tisya-sub-card"><h3>先打开一段会话</h3><p>这些设置跟随当前故事保存。选择角色或群聊的会话后，再回来继续。</p><div class="tisya-directory-buttons">'+button('角色会话','contacts')+button('群聊会话','groups')+'</div></section>');return;}
  renderEpoch++;const epoch=page(tab==='play'?'游玩偏好':'缇斯亚 · 设置','<div id="tisya-settings-app"><p class="tisya-note">正在展开设置…</p></div>');
  await afterPaint();if(epoch!==renderEpoch)return false;
- utility=mountMatrixConfiguration(document,query('#tisya-settings-app'),{service:{...matrixHost,mediaAtlas:chatMedia,preferenceDraft:tableService.preferenceDraft,ensureBound:()=>defaultActivation.retry()},onError:error,onClose:()=>nav(),onIdentity:()=>openIdentity(),onAppearance:()=>openSettings('theme'),onNative:()=>nativeDrawer('sys-settings-button'),initialTab:tab==='tables'?'tables':tab==='resources'?'resources':'preferences',initialTable:initialView==='output'?'T_PREF_OUTPUT_CONFIG':undefined});utility.ready.catch(error);
+ utility=mountMatrixConfiguration(document,query('#tisya-settings-app'),{service:{...matrixHost,mediaAtlas:chatMedia,preferenceDraft:tableService.preferenceDraft,ensureBound:()=>defaultActivation.retry()},onError:error,onClose:()=>nav(),onIdentity:()=>openIdentity(),onAppearance:()=>openSettings('theme'),onNative:()=>nativeDrawer('sys-settings-button'),onStyleRules:()=>openAssistant('style'),initialTab:tab==='tables'?'tables':tab==='resources'?'resources':'preferences',initialTable:initialView==='output'?'T_PREF_OUTPUT_CONFIG':undefined});utility.ready.catch(error);
 
 }
 function openDisplaySettings(){return openSettings('theme');}

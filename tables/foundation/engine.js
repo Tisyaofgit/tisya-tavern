@@ -878,6 +878,15 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  for(const row of rows){try{const schema=context.schemas[row.tableId];if(ownedTable(schema)){check(row.owner&&Object.keys(row.owner).length,'子表需要从所属档案字段引用：'+row.heading);Object.assign(row.values,row.owner);if(schema.fields.some(f=>f.key==='value_state')&&!Object.hasOwn(row.values,'value_state'))row.values.value_state=Object.values(row.states).find(s=>['unknown','unset','none','not_applicable','cleared'].includes(s))??'known';if(schema.fields.some(f=>f.key==='sequence')&&!Object.hasOwn(row.values,'sequence'))row.values.sequence=row.existing?snapshot.state.tables[row.tableId][row.recordId].values.sequence:Number(row.heading.split('／').at(-1));}}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};if(!collectErrors)throw error;capture(error);}}
  checkpoint();
  for(const row of rows)if(snapshot.state.schema[row.tableId]?.phone_internal&&snapshot.state.schema[row.tableId].fields.some(f=>f.key==='id')&&!row.existing)row.values.id=row.recordId;
+ // Machine-owned keys are completed only after identity reuse and owner
+ // attachment. Explicit values (including unknown markers) keep their normal
+ // validation semantics; existing sparse patches never receive a new identity.
+ for(const row of rows){if(row.existing)continue;for(const spec of snapshot.state.schema[row.tableId].fields){
+  if(!creationFieldAllowed(spec)||!spec.prefill_template||Object.hasOwn(row.raw,spec.key)||Object.hasOwn(row.values,spec.key))continue;
+  const variables={row_uuid:row.recordId,uuid:stableId(context.operationId+'|prefill|'+row.tableId+'|'+row.recordId+'|'+spec.key),owner_row_uuid:row.values.owner_row_uuid,owner_field:row.values.owner_field};
+  const value=spec.prefill_template.replace(/\{([^{}]+)\}/g,(_,key)=>{check(typeof variables[key]==='string'&&variables[key],'生成稳定键缺少所属信息：'+row.heading+'／'+spec.label);return variables[key];});
+  row.values[spec.key]=value;row.states[spec.key]='known';
+ }}
  const merged=new Map();
  for(const change of [...rows.map(({tableId,recordId,values,states})=>({tableId,recordId,values,...(Object.keys(states).length?{states}:{})})),...generated]){
   const key=change.tableId+'#'+change.recordId,prior=merged.get(key);

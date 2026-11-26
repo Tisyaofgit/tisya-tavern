@@ -171,9 +171,10 @@ test('loading a different chat invalidates an in-flight opening before it can sa
 test('actual Matrix host shares automatic and form initialization without resetting an existing owner',async()=>{
  const {readFileSync}=await import('node:fs');const {createMatrixHost}=await import('../engine/host.mjs');const {matrixPreset}=await import('../engine/config.mjs');
  const {PHONE_FORM_SCHEMAS}=await import('../engine/phone-form-contract.mjs');
+ const {extendMatrixCatalog}=await import('../engine/materials.mjs');
  const f=fixture(),catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url),'utf8'));
  const host=createMatrixHost({getContext:()=>f.ctx,getSource:()=>matrixPreset(),loadCatalog:async()=>catalog,storage:f.storage,persistSettings:async()=>{},persistMetadata:async()=>{}});
- const first=await host.ensureBound();assert.equal(first.status,'created');const before=clone(f.disk.get(first.id));const database=await host.ensureDatabase();await host.flushProjectionCache();assert.equal(database.contextKey,chatKey(f.ctx));assert.deepEqual(Object.keys(database.state.schema).sort(),[...new Set([...catalog.tables,...PHONE_FORM_SCHEMAS,{id:'T_CHAR_HABITS'},{id:'T_CHAR_MEASURES'},{id:'T_SYS_OFFSTAGE_RULES'}].map(t=>t.id))].sort());assert.deepEqual(f.disk.get(first.id),before);
+ const first=await host.ensureBound();assert.equal(first.status,'created');const before=clone(f.disk.get(first.id));const database=await host.ensureDatabase();await host.flushProjectionCache();assert.equal(database.contextKey,chatKey(f.ctx));assert.deepEqual(Object.keys(database.state.schema).sort(),[...new Set([...extendMatrixCatalog(catalog).tables,...PHONE_FORM_SCHEMAS].map(t=>t.id))].sort());assert.deepEqual(f.disk.get(first.id),before);
  f.disk.delete(first.id);await assert.rejects(host.ensureDatabase(),e=>e.code==='ENGINE_STATE_MISSING');assert.equal(f.disk.has(first.id),false);assert([...f.disk.keys()].every(key=>key.startsWith('derived:')),'missing authoritative state must not be replaced by a derived cache');
 });
 

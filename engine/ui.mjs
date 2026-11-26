@@ -14,7 +14,7 @@ import {createDraftWorkflow} from './draft-workflow.mjs';
 const labels={reply:'回复外壳',task:'任务',anchor:'前后摘要',title:'标题',body:'正文',extra:'附加卡片',cells:'表单指令',vars:'原卡变量',archive:'归档',actions:'行动建议'};
 const tabs=[['preferences','游玩偏好'],['resources','多媒体资源'],['tags','回复格式'],['prompts','完整预设'],['tables','表单与存档'],['generation','生成设置']];
 
-export function mountMatrixConfiguration(document,root,{service,onError=()=>{},onClose=()=>{},onAppearance=()=>{},onIdentity=()=>{},onNative=()=>{},onStateChange=()=>{},initialTab='preferences',initialTable='T_PREF_OUTPUT_CONFIG',initialRecord=null}){
+export function mountMatrixConfiguration(document,root,{service,onError=()=>{},onClose=()=>{},onAppearance=()=>{},onIdentity=()=>{},onNative=()=>{},onStyleRules=()=>{},onStateChange=()=>{},initialTab='preferences',initialTable='T_PREF_OUTPUT_CONFIG',initialRecord=null}){
  let dirty=false,formDirty=false,tab=tabs.some(([id])=>id===initialTab)?initialTab:'preferences';
  let config=service.config.read(),savedFingerprint=JSON.stringify(config),selectedTable=initialTable,selectedRecord=initialRecord??(initialTab==='tables'&&initialTable==='T_PREF_OUTPUT_CONFIG'?config.story.outputConfigId??'':''),catalog;
  let preferenceView=null,renderedTab=null;
@@ -87,10 +87,17 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
    if(!current)throw Error('本会话尚未接入，表单输入仍保留。');
    applyForm(new Runtime(current.state),edit);
   }
-  const preferenceChanges=preferenceDraft?preferenceTextChanges(preferenceDraft.before,preferenceDraft.rows):[];
+  const globalKeys=new Set([...Object.keys(preferenceDraft?.globalBefore??{}),...Object.entries(preferenceDraft?.rows??{}).filter(([,row])=>row.group==='USER'&&row.scope_type==='global').map(([key])=>key)]);
+  const globalRows=Object.fromEntries(Object.entries(preferenceDraft?.rows??{}).filter(([key])=>globalKeys.has(key))),storyBefore=Object.fromEntries(Object.entries(preferenceDraft?.before??{}).filter(([key])=>!globalKeys.has(key))),storyRows=Object.fromEntries(Object.entries(preferenceDraft?.rows??{}).filter(([key])=>!globalKeys.has(key)));
+  const globalChanges=preferenceDraft?preferenceTextChanges(preferenceDraft.globalBefore??{},globalRows):[],preferenceChanges=preferenceDraft?preferenceTextChanges(storyBefore,storyRows):[];
+  if(globalChanges.length&&!service.commitGlobalPreferences)throw Error('全局偏好工作区尚未接入，原文草稿仍保留。');
   if(preferenceChanges.length&&!preferenceDraft.database)throw Error('当前聊天表单尚未接入，原文草稿仍保留；请先接入聊天。');
   let savedForm=false;
   try{
+   if(globalChanges.length){
+    const result=await service.commitGlobalPreferences({operationId:preferenceDraft.globalOperationId??=crypto.randomUUID(),expectedRevision:preferenceDraft.globalDatabase.revision,contextKey:preferenceDraft.globalDatabase.contextKey,changes:globalChanges});
+    preferenceDraft.globalDatabase=result;preferenceDraft.globalBefore=structuredClone(globalRows);preferenceDraft.globalOperationId=null;savedForm=true;
+   }
    if(preferenceChanges.length){
     const result=await service.commitDatabase({operationId:preferenceDraft.operationId??=crypto.randomUUID(),expectedRevision:preferenceDraft.database.revision,contextKey:preferenceDraft.database.contextKey,changes:preferenceChanges,schema:[{id:'T_PREF_SELECTION_OPTIONS',fields:preferenceTextFields}],source:{kind:'preference-editor'}});
     preferenceDraft.database=result;preferenceDraft.before=structuredClone(preferenceDraft.rows);preferenceDraft.operationId=null;savedForm=true;
@@ -117,7 +124,7 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
  cancel.onclick=discardDraft;saveButton.onclick=saveDraft;
  async function render(){
   if(workflow.disposed)return;
-   if(tab==='preferences'&&!preferenceDraft&&service.preferenceEditorSource){const data=await service.preferenceEditorSource();if(workflow.disposed)return;const rows=preferenceTextRows(data.database?.state);preferenceDraft={...data,rows,before:structuredClone(rows),globalBefore:structuredClone(config.playDefaults?.textOverrides??{})};}
+   if(tab==='preferences'&&!preferenceDraft&&service.preferenceEditorSource){const data=await service.preferenceEditorSource();if(workflow.disposed)return;const rows={...preferenceTextRows(data.globalDatabase?.state),...preferenceTextRows(data.database?.state)};preferenceDraft={...data,rows,before:structuredClone(rows),globalBefore:structuredClone(preferenceTextRows(data.globalDatabase?.state))};}
   const keepPosition=renderedTab===tab,scrollTop=keepPosition?content.scrollTop:0,preferenceState=keepPosition?preferenceView?.state():undefined;renderedTab=tab;preferenceView=null;
   content.replaceChildren(el('h3','缇斯亚 · 配置'));resourceDraft?.dispose?.();resourceDraft=null;formDraft=null;
   const nav=el('div',null,'tisya-directory-buttons');
@@ -125,7 +132,7 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   nav.append(routeButton('用户身份',onIdentity,true),routeButton('连接与模型',onNative,true),routeButton('外观',onAppearance,true),routeButton('返回',onClose,true));content.append(nav);
   const body=el('section',null,'tisya-sub-card');content.append(body);
   if(tab==='preferences'){
-   preferenceView=renderPreferences(document,body,{viewState:preferenceState,config,editor:preferenceDraft,assistant:service.preferenceDraft,download,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity});content.scrollTop=scrollTop;
+   preferenceView=renderPreferences(document,body,{viewState:preferenceState,config,editor:preferenceDraft,assistant:service.preferenceDraft,download,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity,onStyleRules});content.scrollTop=scrollTop;
   }
   if(tab==='resources')resourceDraft=renderResources(document,body,{config,changed:()=>changed(),button,field,input,el,mediaAtlas:service.mediaAtlas??null});
   if(tab==='tags'){

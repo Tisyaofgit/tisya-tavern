@@ -96,6 +96,26 @@ test('bound calendar gets deterministic unit link; alias reuses it and unknown u
  const again=compile(e,section(context(e),'T_DYN_SCENE_SPACE',{name:'渡口',turn_elapsed:'3分钟'}));assert.equal(again.a.proposal.matrix.changes.find(r=>r.tableId==='M_UNITS').recordId,a.proposal.matrix.changes.find(r=>r.tableId==='M_UNITS').recordId);
  const alias=compile(copy,section(context(copy),'T_DYN_SCENE_SPACE',{name:'岸边',turn_elapsed:'2分'}));assert.equal(Object.keys(alias.copy.rows('M_UNITS')).length,1);assert.throws(()=>compile(e,section(context(e),'T_DYN_SCENE_SPACE',{name:'渡口',turn_elapsed:'数值：3；单位：不存在单位'})),/关联名称/);
 });
+test('new entity gauges receive deterministic machine keys without weakening explicit unknown validation',()=>{
+ const e=new Runtime(initializeState(catalog)),c=context(e),t=c.catalog.templates.find(t=>t.id==='T_DYN_ENTITY_GAUGES');
+ const values={name:'临时法术续航',entity_id:'施术者',text_value:'充沛',validity:'有效',effective_from:'原文：施术后',change_reason:'合成测试事件'};
+ const raw='【'+t.label+'／1】\n'+Object.entries(values).map(([key,value])=>t.fields.find(f=>f.key===key).row+'：'+value).join('\n');
+ const {a,copy}=compile(e,raw),change=a.proposal.matrix.changes.find(r=>r.tableId==='T_DYN_ENTITY_GAUGES'),gauge=copy.rows('T_DYN_ENTITY_GAUGES')[change.recordId];
+ assert.equal(gauge.values.field_key,'axis.'+change.recordId);assert.equal(gauge.states.field_key,'known');
+ assert.equal(compile(e,raw).a.proposal.matrix.changes.find(r=>r.tableId==='T_DYN_ENTITY_GAUGES').values.field_key,gauge.values.field_key);
+ const line=t.fields.find(f=>f.key==='text_value').row+'：略减',patched=compile(copy,'【'+t.label+'／'+values.name+'】\n'+line).copy;
+ assert.equal(patched.rows('T_DYN_ENTITY_GAUGES')[change.recordId].values.field_key,gauge.values.field_key);
+ const unknown=t.fields.find(f=>f.key==='field_key').row+'：?';
+ assert.throws(()=>compile(e,raw+'\n'+unknown),/所属对象和状态字段键须明确/);
+});
+
+test('owned condition forms also complete their hidden required group key',()=>{
+ const e=new Runtime(initializeState(catalog)),c=context(e),t=c.catalog.templates.find(t=>t.id==='T_STATIC_WORLD_RULES');
+ const raw='【'+t.label+'／1】\n'+t.fields.find(f=>f.key==='name').row+'：临时通行规则\n'+t.fields.find(f=>f.key==='condition').row+'：观察：是；依据：守卫明确放行';
+ const {a,copy}=compile(e,raw),condition=a.proposal.matrix.changes.find(r=>r.tableId==='M_CONDITIONS');
+ assert.ok(condition);assert.equal(condition.values.group_key,condition.recordId);assert.equal(copy.rows('M_CONDITIONS')[condition.recordId].states.group_key,'known');
+});
+
 test('visual preview is read-only and reroll compares against pre-turn values',async()=>{
  const f=await fixture();f.ctx.chat.push({mes:f.reply()});await f.host.sync();let d=await f.draft(),before=await f.snapshot(),v=await f.host.describeTurnReview(d);assert.equal(v.cells.groups[0].rows[0].previous,10);assert.equal(v.cells.groups[0].rows[0].proposed,7);assert.deepEqual(await f.snapshot(),before);
  await f.host.confirmTurn(d);f.ctx.chat[0].mes=f.reply(5);await f.host.sync();d=await f.draft();v=await f.host.describeTurnReview(d);assert.equal(v.cells.groups[0].rows[0].previous,10);assert.equal(v.cells.groups[0].rows[0].proposed,5);assert.equal(await f.hp(),7);await assert.rejects(f.host.describeTurnReview({...d,sourceHash:'stale'}),/变化|更新|不匹配/);

@@ -8,7 +8,7 @@ import {selectControl} from './form-controls.mjs';
 import {renderingResources,RESOURCE_SLOTS} from '../rendering-resources.js';
 import {renderMediaAtlas} from '../media-atlas-ui.js';
 
-export function renderPreferences(document,body,{config,changed,button,navigationButton=button,field,input,el,onIdentity,historyLimit,editor,download,assistant,viewState={}}){
+export function renderPreferences(document,body,{config,changed,button,navigationButton=button,field,input,el,onIdentity,historyLimit,editor,download,assistant,viewState={},onStyleRules}){
  const option=(label,value)=>{const n=el('option',label);n.value=value;return n;};
  let scope=viewState.scope??'story';const refreshers=new Map();
  body.classList.add('tisya-preferences');const style=el('style');style.textContent=preferenceStyles;body.append(style);
@@ -65,7 +65,7 @@ export function renderPreferences(document,body,{config,changed,button,navigatio
   for(const [id,label,type,fallback]of [['main_language','主语言','text','中文'],['min_length','正文最少字数','number',2000],['max_length','正文最多字数','number',5000],['history_messages','历史聊天条数（当前输入始终保留）','number',historyLimit?.()??50]]){
    const control=input(value.parameters?.[id]??(id==='history_messages'?fallback:''),v=>{const target=owner();target.parameters??={};if(v==='')delete target.parameters[id];else target.parameters[id]=type==='number'?Number(v):v;changed();},{type});control.placeholder=String(fallback);control.setAttribute('aria-label',label);if(type==='number'){control.min='0';control.step='1';}params.append(field(label,control));
   }
-  area.append(params);if(editor)renderUserPreferences(document,area,{scope,config,editor,changed,draw,button,input,field,el,assistant});if(editor&&download)try{renderPreferencePackages(document,area,{scope,config,editor,changed,draw,button,input,field,el,download});}catch(error){const warning=el('p','偏好包暂不可用：'+error.message);warning.setAttribute('role','alert');area.append(warning);}
+  area.append(params);if(editor)renderUserPreferences(document,area,{scope,config,editor,changed,draw,button,input,field,el,assistant,onStyleRules});if(editor&&download)try{renderPreferencePackages(document,area,{scope,config,editor,changed,draw,button,input,field,el,download});}catch(error){const warning=el('p','偏好包暂不可用：'+error.message);warning.setAttribute('role','alert');area.append(warning);}
   restoreOpen(opened);filter();if(scroll)scroll.scrollTop=top;
  }
  scopes.onchange=()=>{scope=scopes.value;draw();};draw();restoreOpen(viewState.open??{});filter();

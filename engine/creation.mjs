@@ -1,4 +1,5 @@
 import {ensureFormSchemas} from './form-semantics.mjs';
+import {worldTagChanges} from './tag-system.mjs';
 import {createCreationTasks} from './creation-task.mjs';
 import {clone,digest,fail} from './common.mjs';
 import {parseReply,envelope} from './reply.mjs';
@@ -140,7 +141,7 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
     else if(binding?.worldId&&!has('T_STATIC_WORLDS',binding.worldId))delete binding.worldId;
    }
   }catch(cause){throw Object.assign(Error('创作回复或简表无法接纳：'+cause.message+'；原始返回已保留',{cause}),{rawResponse:raw,nativeSources:sources,sheetContext:sheets});}
-  const proposal=accepted.proposal,result={format:CREATION_CONTRACT,replyContract:CREATION_REPLY_CONTRACT,operationId,identitySeed,kind,mode,goal,source:explicitSource,nativeSources:sources,nativeSourceDigest:digest(sources),proposal,acceptance:accepted.acceptance,rawResponse:raw,rawResponses:[...new Map([...(repairContext?.rawResponses??[]),...tasks.responses(identitySeed),{operationId,rawResponse:raw}].map(row=>[row.operationId,row])).values()],workbook:accepted.workbook,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,...(repairContext?{repairContext:clone(repairContext)}:{}),...(destination?{destination:clone(destination)}:{}),...(templates?{creationTemplates:templates}:{})};
+  const proposal=accepted.proposal;proposal.matrix.changes=worldTagChanges(proposal.matrix.changes,snapshot.state);const result={format:CREATION_CONTRACT,replyContract:CREATION_REPLY_CONTRACT,operationId,identitySeed,kind,mode,goal,source:explicitSource,nativeSources:sources,nativeSourceDigest:digest(sources),proposal,acceptance:accepted.acceptance,rawResponse:raw,rawResponses:[...new Map([...(repairContext?.rawResponses??[]),...tasks.responses(identitySeed),{operationId,rawResponse:raw}].map(row=>[row.operationId,row])).values()],workbook:accepted.workbook,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,...(repairContext?{repairContext:clone(repairContext)}:{}),...(destination?{destination:clone(destination)}:{}),...(templates?{creationTemplates:templates}:{})};
   try{
    guard();if(proposal.matrix.changes.length)validateCreationProposal(proposal,snapshot,{kind:kind==='character'&&proposal.matrix.binding?.entityId?'character':'world',mode});
    result.schema=Object.fromEntries([...new Set(proposal.matrix.changes.map(c=>c.tableId))].map(id=>[id,clone(snapshot.state.schema[id])]));
@@ -169,18 +170,19 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
  async function save(draft,{destination=draft?.destination}={}){
   if(sourceBooks){const initial=await database.read();check(initial?.contextKey===draft?.contextKey,'创作草稿属于另一聊天');await recoverIntent(draft,initial);}
   const {proposal,snapshot,guard}=await validate(draft);guard();
+  const changes=worldTagChanges(proposal.matrix.changes,snapshot.state);
   if(sourceBooks&&snapshot.revision!==draft.expectedRevision)check(!!snapshot.state.runtime?.receipts?.[draft.operationId],'表单已被另一页面更新；来源书尚未写入，请刷新后重试');
   const source={kind:'creation',name:proposal.name,goal:draft.goal,binding:proposal.matrix.binding??null,explicitSource:clone(draft.source),nativeSources:clone(draft.nativeSources),nativeSourceDigest:draft.nativeSourceDigest,templateDigest:draft.creationTemplates?digest(draft.creationTemplates):null,...(draft.repairContext?{repairOf:draft.repairContext.operationId}:{})};
   let archivePlan,archiveReceipt,archiveInputDigest;
   try{
-   if(sourceBooks){const archiveCreation=draft.recovery&&draft.archivePlan?.definition?.source?.creation?clone(draft.archivePlan.definition.source.creation):Object.fromEntries(Object.entries(source).filter(([key])=>!['nativeSources','explicitSource'].includes(key))),archiveSource={...(plain(draft.source)?clone(draft.source):{}),creation:archiveCreation},archiveInput={operationId:draft.operationId,kind:draft.kind,mode:draft.mode,name:proposal.name,summary:proposal.summary,changes:proposal.matrix.changes,binding:proposal.matrix.binding??null,destination,source:archiveSource,schema:snapshot.state.schema,...(draft.acceptance?{groups:clone(draft.acceptance.accepted)}:{})};archiveInputDigest=digest(archiveInput);
+   if(sourceBooks){const archiveCreation=draft.recovery&&draft.archivePlan?.definition?.source?.creation?clone(draft.archivePlan.definition.source.creation):Object.fromEntries(Object.entries(source).filter(([key])=>!['nativeSources','explicitSource'].includes(key))),archiveSource={...(plain(draft.source)?clone(draft.source):{}),creation:archiveCreation},archiveInput={operationId:draft.operationId,kind:draft.kind,mode:draft.mode,name:proposal.name,summary:proposal.summary,changes,binding:proposal.matrix.binding??null,destination,source:archiveSource,schema:snapshot.state.schema,...(draft.acceptance?{groups:clone(draft.acceptance.accepted)}:{})};archiveInputDigest=digest(archiveInput);
     if(draft.archiveInputDigest&&draft.archiveInputDigest!==archiveInputDigest){check(draft.archiveReceipt?.confirmed===false&&draft.archiveReceipt.status==='not-written','已写入或尚未确认写入结果的归档计划不能更换内容，请完成同一次提交');delete draft.archivePlan;delete draft.archiveReceipt;delete draft.archiveInputDigest;}
     archivePlan=draft.archiveInputDigest===archiveInputDigest&&draft.archivePlan?draft.archivePlan:await sourceBooks.prepareDefinitionArchive(archiveInput);guard();draft.archivePlan=clone(archivePlan);draft.archiveInputDigest=archiveInputDigest;
     await persistIntent(draft,snapshot);guard();
     archiveReceipt=await sourceBooks.commitDefinitionArchive(archivePlan,{guard});check(archiveReceipt?.confirmed===true,'来源书归档尚未获回读确认');source.sourceArchive=clone(archiveReceipt.sourceArchive);draft.archiveReceipt=clone(archiveReceipt);guard();}
    const repairContext=repairState({...draft,destination},{archiveReceipt,revision:draft.expectedRevision+1});
    source.repairContext=clone(repairContext);
-   const saved=await database.commit({operationId:draft.operationId,expectedRevision:draft.expectedRevision,contextKey:draft.contextKey,changes:proposal.matrix.changes,source});
+   const saved=await database.commit({operationId:draft.operationId,expectedRevision:draft.expectedRevision,contextKey:draft.contextKey,changes,source});
    repairContext.revision=saved.revision;const remains=repairContext.acceptance.pending.length||repairContext.acceptance.warnings.length,superseded=Object.values(saved.state?.runtime?.receipts??{}).some(receipt=>receipt.result?.source?.kind==='creation'&&receipt.result.source.repairOf===draft.operationId);
    let currentRepair=repairContext,persistenceError;if(superseded){await pending();currentRepair=tasks.repair()??{...repairContext,acceptance:{...repairContext.acceptance,pending:[],warnings:[]}};}else persistenceError=tasks.rememberRepair(remains?repairContext:null);
    return {...saved,repairContext:currentRepair,...(persistenceError?{persistenceError}:{}),...(archiveReceipt?{archiveReceipt,sourceArchive:clone(archiveReceipt.sourceArchive)}:{})};

@@ -350,6 +350,9 @@ class EngineError extends Error {
 }
 const fail=(code,message,details)=>{throw new EngineError(code,message,details);};
 const clone=v=>structuredClone(v);
+// Persisted engine states and journal patches are acyclic JSON. JSON snapshots
+// avoid the higher structured-clone overhead without changing general values.
+const cloneJson=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v));
 const own=(o,k)=>Object.hasOwn(o??{},k);
 const stable=v=>{
  const stack=new Set();
@@ -422,7 +425,7 @@ function decode(raw,spec={}){
  if(type==='ENUM'&&(spec.enum??spec.options)){if(!(spec.enum??spec.options).includes(raw))fail('ENUM_VALUE','值不在注册选项中',{field:spec.key,value:raw});return [raw,'known'];}if(typeof raw!=='string')fail('TEXT_TYPE','文本和ID字段需要文字',{field:spec.key});return [raw,'known'];
 }
 
-return {EngineError,fail,clone,own,stable,createSha256,sha256,sha256Async,digest,digestAsync,stableId,asError,decimal,decode};
+return {EngineError,fail,clone,cloneJson,own,stable,createSha256,sha256,sha256Async,digest,digestAsync,stableId,asError,decimal,decode};
 })();
 
 const __network_module_2=(()=>{
@@ -3524,6 +3527,140 @@ return {downloadText,downloadJson};
 })();
 
 const __network_module_26=(()=>{
+
+// 统一 IndexedDB 基础设施。所有本地媒体库与派生缓存共用同一套打开握手
+// （版本/schema/blocked/versionchange）、事务封装（错误归一、可选无进展看门狗）
+// 与一次性搬迁（复制→核对→删除旧库）。禁止各模块自建 indexedDB.open 或私有事务链。
+
+// openDatabase：声明式打开。schema(db, oldVersion) 在 upgradeneeded 内执行，抛错即
+// 中止升级并拒绝；watchFor(phase, onTimeout) 由调用方提供无进展看门狗（须返回
+// {progress(), stop()}），超时以 messages.timeout 拒绝，随后到达的成功只关闭句柄。
+function openDatabase({indexedDB,name,version,schema=null,label='数据',messages={},watchFor=null,onVersionChange=null}){
+ return new Promise((resolve,reject)=>{
+  let settled=false,request;
+  const settle=(fn,v)=>{if(settled)return;settled=true;watch?.stop();fn(v);};
+  const watch=watchFor?.('open',()=>settle(reject,messages.timeout?.('open')??Error(label+'打开超时')));
+  try{request=version===undefined?indexedDB.open(name):indexedDB.open(name,version);}catch(error){settle(reject,error);return;}
+  request.onupgradeneeded=()=>{if(!schema)return;try{schema(request.result,request.oldVersion??0);}catch(error){try{request.transaction.abort();}catch{}settle(reject,error);}};
+  request.onblocked=()=>settle(reject,messages.blocked?.()??Error(label+'升级被旧页面占用，请关闭旧页面后重试'));
+  request.onerror=()=>settle(reject,messages.open?messages.open(request.error):(request.error??Error(label+'无法打开')));
+  request.onsuccess=()=>{const db=request.result;if(settled||!db){db?.close();return;}db.onversionchange=()=>{db.close();onVersionChange?.(db);};settle(resolve,db);};
+ });
+}
+
+// openExistingDatabase：只读探开，绝不创建。库不存在（触发升级即中止）或缺少必需
+// store 时返回 null。databases() 可用时先查名录，避免触发升级事务。
+async function openExistingDatabase({indexedDB,name,label='数据',messages={},requireStores=[],onVersionChange=null}){
+ if(typeof indexedDB.databases==='function'&&!(await indexedDB.databases()).some(entry=>entry.name===name))return null;
+ return new Promise((resolve,reject)=>{
+  let nonexistent=false;const request=indexedDB.open(name);
+  request.onupgradeneeded=()=>{nonexistent=true;try{request.transaction.abort();}catch{}};
+  request.onerror=()=>nonexistent?resolve(null):reject(messages.open?messages.open(request.error):(request.error??Error(label+'无法打开')));
+  request.onblocked=()=>reject(messages.blocked?.()??Error(label+'正被其他页面占用，请稍后重试'));
+  request.onsuccess=()=>{const db=request.result;if(requireStores.some(store=>!db.objectStoreNames.contains(store))){db.close();resolve(null);return;}db.onversionchange=()=>{db.close();onVersionChange?.(db);};resolve(db);};
+ });
+}
+
+// transact：统一事务封装。work(store, set, progress)；onerror 默认透传 DOMException，
+// 可用 onError 包装成面向用户的文案；看门狗超时先以「label超时（phase）」拒绝再中止。
+function transact(db,storeName,mode,work,{label='数据',phase=mode,watchFor=null,onError=null}={}){
+ return new Promise((resolve,reject)=>{
+  let value,settled=false,tx;
+  try{tx=db.transaction(storeName,mode);}catch(error){reject(error);return;}
+  const settle=(fn,v)=>{if(settled)return;settled=true;watch?.stop();fn(v);};
+  const watch=watchFor?.(phase,()=>{settle(reject,Error(label+'超时（'+phase+'）'));try{tx.abort();}catch{}});
+  tx.oncomplete=()=>settle(resolve,value);
+  tx.onerror=()=>settle(reject,onError?onError(tx.error):(tx.error??Error(label+'失败')));
+  tx.onabort=()=>settle(reject,tx.error??Error(label+'已中止。'));
+  try{work(tx.objectStore(storeName),v=>value=v,()=>watch?.progress());}catch(error){settle(reject,error);try{tx.abort();}catch{}}
+ });
+}
+
+const relocationFlights=new Map();
+
+// relocateLegacyDatabase：一次性搬迁。旧库不存在时零副作用（不创建目标库）；存在时
+// 逐 store 原子复制（同一事务内全量 put，键同则幂等），复制后按条数核对，再删除旧库。
+// 删除被其他页面阻塞时保留旧库待下次清理，不影响已核对的新库数据。同库并发共享一单。
+async function relocateLegacyDatabase({indexedDB,from,stores,target,label='数据'}){
+ const key=from+'→'+target.name;
+ if(relocationFlights.has(key))return relocationFlights.get(key);
+ const task=(async()=>{
+  const legacy=await openExistingDatabase({indexedDB,name:from,label});
+  if(!legacy)return {from,relocated:false,moved:0,deleted:false};
+  try{
+   const db=await openDatabase({indexedDB,name:target.name,version:target.version,schema:target.schema,label});
+   let moved=0;
+   try{
+    for(const {from:sourceStore,to:targetStore}of stores){
+     if(!legacy.objectStoreNames.contains(sourceStore))continue;
+     const records=await transact(legacy,sourceStore,'readonly',(store,set)=>{const request=store.getAll();request.onsuccess=()=>set(request.result??[]);},{label,phase:'搬迁读取'});
+     await transact(db,targetStore,'readwrite',store=>{for(const record of records)store.put(record);},{label,phase:'搬迁写入'});
+     const count=await transact(db,targetStore,'readonly',(store,set)=>{const request=store.count();request.onsuccess=()=>set(request.result??0);},{label,phase:'搬迁核对'});
+     if(count<records.length)throw Error(label+'搬迁核对失败：'+sourceStore+'（'+count+'/'+records.length+'）');
+     moved+=records.length;
+    }
+   }finally{db.close();}
+   const deleted=await new Promise(resolve=>{let request;try{request=indexedDB.deleteDatabase(from);}catch{resolve(false);return;}request.onsuccess=()=>resolve(true);request.onerror=()=>resolve(false);request.onblocked=()=>resolve(false);});
+   return {from,relocated:true,moved,deleted};
+  }finally{legacy.close();}
+ })();
+ relocationFlights.set(key,task);
+ try{return await task;}finally{if(relocationFlights.get(key)===task)relocationFlights.delete(key);}
+}
+
+return {openDatabase,openExistingDatabase,transact,relocateLegacyDatabase};
+})();
+
+const __network_module_27=(()=>{
+const {openDatabase,openExistingDatabase,relocateLegacyDatabase}=__network_module_26;
+// 统一媒体库契约：三个历史私有库（图鉴 tisya-media-atlas、手机原件
+// tisya-phone-host-media、预览 tisya-phone-life-media）合并为单一 tisya-media，
+// 各域一个 store。首次打开经框架一次性搬迁旧库原件（复制→条数核对→删旧库），
+// 字节零丢失；此后旧库不再被任何读取路径打开。
+
+
+const MEDIA_DATABASE='tisya-media';
+const MEDIA_STORES=Object.freeze({atlasAssets:'atlas-assets',atlasBindings:'atlas-bindings',phoneAssets:'phone-assets',previewAssets:'phone-preview-assets'});
+
+function mediaDatabaseSchema(db){
+ for(const name of Object.values(MEDIA_STORES))if(!db.objectStoreNames.contains(name))db.createObjectStore(name,{keyPath:'id'});
+}
+
+const LEGACY_SOURCES=Object.freeze([
+ Object.freeze({from:'tisya-media-atlas',stores:Object.freeze([Object.freeze({from:'assets',to:MEDIA_STORES.atlasAssets}),Object.freeze({from:'bindings',to:MEDIA_STORES.atlasBindings})])}),
+ Object.freeze({from:'tisya-phone-host-media',stores:Object.freeze([Object.freeze({from:'assets',to:MEDIA_STORES.phoneAssets})])}),
+ Object.freeze({from:'tisya-phone-life-media',stores:Object.freeze([Object.freeze({from:'assets',to:MEDIA_STORES.previewAssets})])}),
+]);
+
+async function relocateLegacyMediaDatabases({indexedDB,label='媒体'}){
+ const results=[];
+ for(const source of LEGACY_SOURCES)results.push(await relocateLegacyDatabase({indexedDB,from:source.from,stores:source.stores,target:{name:MEDIA_DATABASE,version:1,schema:mediaDatabaseSchema},label}));
+ return results;
+}
+
+async function openMediaDatabase({indexedDB,label='媒体',messages={},watchFor=null,onVersionChange=null}){
+ await relocateLegacyMediaDatabases({indexedDB,label});
+ return openDatabase({indexedDB,name:MEDIA_DATABASE,version:1,schema:mediaDatabaseSchema,label,messages,watchFor,onVersionChange});
+}
+
+// 只读探开：不创建库、不写入任何记录。唯一例外是旧库仍在时执行一次性框架搬迁
+// （复制原件并核对后删旧库），除此之外 reading 路径绝不触碰旧库。
+async function openExistingMediaDatabase({indexedDB,label='媒体',messages={},requireStores=[],onVersionChange=null}){
+ const existing=await openExistingDatabase({indexedDB,name:MEDIA_DATABASE,label,messages,requireStores,onVersionChange});
+ if(existing)return existing;
+ for(const source of LEGACY_SOURCES){
+  const legacy=await openExistingDatabase({indexedDB,name:source.from,label,messages});
+  if(!legacy)continue;
+  legacy.close();
+  return openMediaDatabase({indexedDB,label,messages,onVersionChange});
+ }
+ return null;
+}
+
+return {MEDIA_DATABASE,MEDIA_STORES,mediaDatabaseSchema,relocateLegacyMediaDatabases,openMediaDatabase,openExistingMediaDatabase};
+})();
+
+const __network_module_28=(()=>{
 const {phoneTimeText}=__network_module_10;
 const {displayText,accountDisplayName}=__network_module_11;
 const {validateState,money}=__network_module_9;
@@ -3538,6 +3675,10 @@ const {createPhonePlayback}=__network_module_23;
 const {createPhotoDerivative,renderPhotoEditor,refreshPhotoEditPreview}=__network_module_24;
 const {importPhone}=__network_module_15;
 const {downloadText}=__network_module_25;
+const {openMediaDatabase,MEDIA_STORES}=__network_module_27;
+const {transact}=__network_module_26;
+
+
 
 
 
@@ -3606,10 +3747,10 @@ async function stashDraft(){if(!state||ui.app!=='weibo'||ui.tab!=='compose')retu
 function stopVideos(root){for(const video of root?.querySelectorAll?.('video')??[]){video.pause();video.removeAttribute('src');}}
 function openSheet(html){stopVideos($('#overlay'));$('#overlay').innerHTML=`<div class="modal-backdrop"><section class="modal-sheet">${btn(icon('close'),'modal.close',{},'icon-button close-modal')}${html}</section></div>`;}
 async function dispatch(action,permitBusy=false,{quiet=false}={}){assertScope();if(!state)throw new Error('请先初始化生活手机。');if(busy&&!permitBusy)throw new Error('上一项操作正在保存，请稍候。');if(['world.advance','order.advance','calendar.confirm','calendar.respond','social.network.advance','social.network.seen'].includes(action.type))throw new Error('该状态由下一轮剧情的实际回执推进。');busy=true;$('#busy').innerHTML='<span class="busy-mark">正在保存</span>';try{action={...action,id:action.id||makeId('op')};const out=await service.dispatchLife(action,{expectedRevision:service.getState().revision,bindingKey});assertScope();updateState();if(!quiet){if(out.result?.navigate)navigate(out.result.navigate);else if(action.type.startsWith('wallet.'))navigate({app:'wallet',tab:'ledger'});else render();toast(out.result?.message||'已保存');}return out.result;}finally{busy=false;if(!disposed)$('#busy').innerHTML='';if(refreshPending&&!disposed){refreshPending=false;refresh();}}}
-async function openDb(){assertScope();if(mediaDb)return mediaDb;if(!window.indexedDB)throw new Error('当前宿主没有可用的媒体存储接口；状态和原件均未替换。');mediaDb=await new Promise((resolve,reject)=>{const req=window.indexedDB.open('tisya-phone-host-media',1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('assets'))req.result.createObjectStore('assets',{keyPath:'id'});};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(new Error('媒体资源库无法打开：'+(req.error?.message||'未知错误')));req.onblocked=()=>reject(new Error('媒体资源库正在被其他页面升级，请稍后重开。'));});assertScope();return mediaDb;}
+async function openDb(){assertScope();if(mediaDb)return mediaDb;if(!window.indexedDB)throw new Error('当前宿主没有可用的媒体存储接口；状态和原件均未替换。');mediaDb=await openMediaDatabase({indexedDB:window.indexedDB,label:'媒体资源库',messages:{open:error=>new Error('媒体资源库无法打开：'+(error?.message||'未知错误')),blocked:()=>new Error('媒体资源库正在被其他页面升级，请稍后重开。')}});assertScope();return mediaDb;}
 const assetKey=id=>JSON.stringify([mediaOriginContextKey,bindingKey,id]);
-async function assetGet(id){assertScope();const db=await openDb();const blob=await new Promise((resolve,reject)=>{const req=db.transaction('assets','readonly').objectStore('assets').get(assetKey(id));req.onsuccess=()=>resolve(req.result?.blob??null);req.onerror=()=>reject(new Error('媒体原件读取失败。'));});assertScope();return blob;}
-async function assetPut(id,blob){assertScope();const old=await assetGet(id);if(old){const a=new Uint8Array(await old.arrayBuffer()),b=new Uint8Array(await blob.arrayBuffer());assertScope();if(a.length!==b.length||a.some((v,i)=>v!==b[i]))throw new Error('媒体编号与已保存原件冲突，原件已保留。');return;}const db=await openDb();assertScope();await new Promise((resolve,reject)=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').add({id:assetKey(id),blob});tx.oncomplete=resolve;tx.onerror=()=>reject(new Error('媒体保存失败：'+(tx.error?.message||'存储不可用')));tx.onabort=()=>reject(new Error('媒体保存已中止。'));});assertScope();}
+async function assetGet(id){assertScope();const db=await openDb();const record=await transact(db,MEDIA_STORES.phoneAssets,'readonly',(store,set)=>{const req=store.get(assetKey(id));req.onsuccess=()=>set(req.result);},{label:'媒体原件读取',onError:()=>new Error('媒体原件读取失败。')});assertScope();return record?.blob??null;}
+async function assetPut(id,blob){assertScope();const old=await assetGet(id);if(old){const a=new Uint8Array(await old.arrayBuffer()),b=new Uint8Array(await blob.arrayBuffer());assertScope();if(a.length!==b.length||a.some((v,i)=>v!==b[i]))throw new Error('媒体编号与已保存原件冲突，原件已保留。');return;}const db=await openDb();assertScope();await transact(db,MEDIA_STORES.phoneAssets,'readwrite',store=>{store.add({id:assetKey(id),blob});},{label:'媒体保存',onError:error=>new Error('媒体保存失败：'+(error?.message||'存储不可用'))});assertScope();}
 function bindUrl(id,blob){assertScope();if(mediaURLs.has(id))URL.revokeObjectURL(mediaURLs.get(id));mediaURLs.set(id,URL.createObjectURL(blob));}
 async function loadMediaURLs(){if(!state)return;const visiblePhoto=p=>photoOwned(state,p)||p.visibility==='public'||state.social.posts.some(post=>canReadPost(state,post)&&post.mediaGrants?.includes(p.id));const ids=[...state.media.photos.filter(p=>p.source==='file'&&visiblePhoto(p)).map(p=>p.assetId),...state.media.songs.filter(song=>canReadSong(state,song)&&songPlayAccess(state,song).allowed).map(s=>s.audioId).filter(Boolean)];if(!ids.length)return;try{for(const id of new Set(ids)){const blob=await assetGet(id);if(blob)bindUrl(id,blob);}render();}catch(e){toast(e.message,true);}}
 const getSong=id=>state?.media.songs.find(s=>s.id===id&&canReadSong(state,s));
@@ -3694,7 +3835,7 @@ async function confirmImport(){assertScope();if(busy)throw new Error('另一项�
 return {mountPhoneLife};
 })();
 
-const __network_module_27=(()=>{
+const __network_module_29=(()=>{
 
 /*
  * Independent network-block preview. All document content is demonstration data.
@@ -3888,7 +4029,7 @@ function renderPublic(doc,ctx){
 return {PUBLIC_KINDS,publicAccounts,publicDocuments,renderPublic};
 })();
 
-const __network_module_28=(()=>{
+const __network_module_30=(()=>{
 
 /**
  * Media pages for the independent social-suite preview.
@@ -4289,7 +4430,7 @@ function renderMedia(doc,ctx) {
 return {MEDIA_KINDS,mediaAccounts,mediaDocuments,renderMedia};
 })();
 
-const __network_module_29=(()=>{
+const __network_module_31=(()=>{
 
 // Fictional demonstration records. They do not modify the Glanz worldbook.
 const COMMUNICATION_KINDS=['forum','group','bubble','dm','inbox','timeline'];
@@ -4397,7 +4538,7 @@ function renderCommunication(doc,ctx){if(doc.kind==='forum')return forum(doc,ctx
 return {COMMUNICATION_KINDS,communicationAccounts,communicationDocuments,renderCommunication};
 })();
 
-const __network_module_30=(()=>{
+const __network_module_32=(()=>{
 
 // Pure phone shell. bodyHtml is trusted HTML produced by the local social renderers.
 // All user- and model-controlled text/attributes are escaped at this boundary.
@@ -4537,14 +4678,14 @@ function renderPhoneSnapshot({id='',title='手机消息',kind='forum',bodyHtml='
 return {renderPhoneShell,renderPhoneSnapshot};
 })();
 
-const __network_module_31=(()=>{
+const __network_module_33=(()=>{
 const {createPhoneService}=__network_module_15;
-const {mountPhoneLife}=__network_module_26;
+const {mountPhoneLife}=__network_module_28;
 const {getDoc,getVisibleDocuments,getAccounts}=__network_module_5;
-const {PUBLIC_KINDS,publicAccounts,publicDocuments,renderPublic}=__network_module_27;
-const {MEDIA_KINDS,mediaAccounts,mediaDocuments,renderMedia}=__network_module_28;
-const {COMMUNICATION_KINDS,communicationAccounts,communicationDocuments,renderCommunication}=__network_module_29;
-const {renderPhoneShell,renderPhoneSnapshot}=__network_module_30;
+const {PUBLIC_KINDS,publicAccounts,publicDocuments,renderPublic}=__network_module_29;
+const {MEDIA_KINDS,mediaAccounts,mediaDocuments,renderMedia}=__network_module_30;
+const {COMMUNICATION_KINDS,communicationAccounts,communicationDocuments,renderCommunication}=__network_module_31;
+const {renderPhoneShell,renderPhoneSnapshot}=__network_module_32;
 const {downloadText}=__network_module_25;
 
 

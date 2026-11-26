@@ -1,6 +1,7 @@
 import catalog from './preference-options.json' with {type:'json'};
 import {clone,fail} from './common.mjs';
 import {storyAvatar,avatarReference} from './identity.mjs';
+import {compileTagProjection,preferenceProjectionTier} from './tag-system.mjs';
 
 export const PREFERENCE_GROUPS=catalog.groups;
 export const USER_PREFERENCE_GROUP={id:'USER',label:'用户偏好',section:'用户偏好',slot:'tisya_contractor_wish',multiple:false,options:[]};
@@ -115,7 +116,7 @@ export function validatePreferenceTexts(rows={}){
   if(row.kind!=null&&!['custom','override','user'].includes(row.kind))fail('PREFERENCE_TEXT_KIND','偏好条目种类无效');
   if(row.kind==='custom'&&(typeof row.name!=='string'||!row.name.trim()||JSON.stringify(selection)!==JSON.stringify(group.multiple?['custom:'+row.id]:'custom:'+row.id)))fail('PREFERENCE_CUSTOM','自定义选项名称或身份无效');
   if(row.kind==='user'&&row.enabled&&!row.name.trim())fail('USER_PREFERENCE_NAME','用户偏好名称不能为空');
-  if(row.enabled&&!row.text.trim())fail('PREFERENCE_TEXT_EMPTY','编辑原文不能为空；停用请使用分组选项');
+  if(row.enabled&&!row.text.trim()&&!(group.id==='USER'&&(row.tag_id||['extension_pack','projection_setting'].includes(row.owner_type))))fail('PREFERENCE_TEXT_EMPTY','编辑原文不能为空；停用请使用分组选项');
  }
  return rows;
 }
@@ -141,10 +142,11 @@ export function preferenceOptions(group,config,rows={}){
 }
 
 export function userPreferenceMaterial(config,rows={}){
- return Object.values({...config.playDefaults?.textOverrides,...rows}).filter(r=>r.group==='USER'&&r.enabled&&r.legacy!==true).map(r=>'用户偏好：'+r.name+'\n'+expandPreferenceText(r.text,config,effectivePreferences(config).parameters)).join('\n\n');
+ return Object.values({...config.playDefaults?.textOverrides,...rows}).filter(r=>r.group==='USER'&&r.enabled&&r.legacy!==true&&r.text?.trim()).map(r=>'用户偏好：'+r.name+'\n'+expandPreferenceText(r.text,config,effectivePreferences(config).parameters)).join('\n\n');
 }
 
 export function preferenceWishSlot(config,slots={}){
  const rows=slots.tisya_preference_texts?JSON.parse(slots.tisya_preference_texts):{},text=userPreferenceMaterial(config,rows);
- return [slots.tisya_contractor_wish,text?'[USER.PREFERENCES]\n'+text+'\n[/USER.PREFERENCES]':''].filter(Boolean).join('\n');
+ const tagState=slots.tisya_tag_state?JSON.parse(slots.tisya_tag_state):null,tags=tagState?compileTagProjection({state:tagState,globalRows:{...config.playDefaults?.textOverrides,...rows},packs:[],tier:preferenceProjectionTier(tagState,{...config.playDefaults?.textOverrides,...rows},config.story?.tagProjectionTier??config.playDefaults?.tagProjectionTier??'full'),worldId:tagState.runtime?.scope?.world_ref??null}).text:'';
+ return [slots.tisya_contractor_wish,text?'[USER.PREFERENCES]\n'+text+'\n[/USER.PREFERENCES]':'',tags].filter(Boolean).join('\n');
 }

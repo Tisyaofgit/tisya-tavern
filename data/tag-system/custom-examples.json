@@ -1,0 +1,486 @@
+{
+  "custom_packs": [
+    {
+      "manifest": {
+        "package": "custom.occult_investigator",
+        "name": "民俗怪谈调查员扩展包",
+        "version": "2.0.0",
+        "schema_version": 2,
+        "author": "user",
+        "description": "为中式民俗悬疑、异常收容与克苏鲁调查提供“异常调查四极”坐标组、专属标签、语料、技法与多阶段调查链。",
+        "depends": [
+          "builtin>=2.0.0"
+        ],
+        "namespace": "custom.occult"
+      },
+      "poles": [
+        {
+          "id": "pole.custom_occult_rational",
+          "label": "实证锚定",
+          "axis": "axis.custom_sanity_stance",
+          "semantics": "先核对时间线、物理痕迹与旧档口供，用冷静实证死死拉住现实锚点"
+        },
+        {
+          "id": "pole.custom_occult_attuned",
+          "label": "灵性共鸣",
+          "axis": "axis.custom_sanity_stance",
+          "semantics": "借梦兆、器物微感与非人直觉捕捉常人看不见的异常频率"
+        },
+        {
+          "id": "pole.custom_occult_cautious",
+          "label": "守界规避",
+          "axis": "axis.custom_sanity_stance",
+          "semantics": "严守民俗禁忌与撤离路线，优先保住同伴性命而非逞强"
+        },
+        {
+          "id": "pole.custom_occult_transgressive",
+          "label": "越界试探",
+          "axis": "axis.custom_sanity_stance",
+          "semantics": "主动踩线验证怪谈规则边界，以可控代价硬撬核心真相"
+        }
+      ],
+      "axes": [
+        {
+          "id": "axis.custom_sanity_stance",
+          "label": "异常调查四极",
+          "independent": true,
+          "x": {
+            "negative": "pole.custom_occult_rational",
+            "positive": "pole.custom_occult_attuned"
+          },
+          "y": {
+            "negative": "pole.custom_occult_cautious",
+            "positive": "pole.custom_occult_transgressive"
+          },
+          "quadrants": {
+            "实证锚定×守界规避": "档案派调查员",
+            "实证锚定×越界试探": "破律实验派",
+            "灵性共鸣×守界规避": "守夜民俗师",
+            "灵性共鸣×越界试探": "涉险通灵者"
+          }
+        }
+      ],
+      "corpora": [
+        {
+          "id": "corpus.custom.occult_protocol",
+          "label": "民俗异常调查规程",
+          "domain": "custom",
+          "brief": "异常总躲在熟人礼俗的一处微小错位里；每次踩线验证禁忌都必须留好物理退路，并由同伴握住现实锚点。",
+          "full": {
+            "world_rules": [
+              "村中老人避而不谈的年份与族谱缺页，往往藏着真正致死的规则例外。",
+              "纸质笔记、机械怀表、红绳与朱砂既是工具，也是把同伴从认知污染里拉回来的锚点。"
+            ],
+            "observable_signals": [
+              "香火无风骤灭",
+              "倒挂的门牌或旧照",
+              "守夜时突然停住的虫鸣",
+              "同伴眼底闪过一瞬的失焦"
+            ],
+            "consequences": [
+              "越界试探必然触发局部异常反噬，必须借同伴的呼唤与体温重锚现实。"
+            ]
+          }
+        }
+      ],
+      "techniques": [
+        {
+          "id": "tech.custom.occult_clue_reveal",
+          "label": "日常错位渗恐",
+          "slot": "detail.sensory",
+          "purpose": "不靠跳吓，而是用“一切如常里的一处诡异错位”制造背后发凉的民俗压迫感。",
+          "steps": {
+            "observe": "先铺陈一幕再寻常不过的乡野或老宅生活画面。",
+            "select": "在画面边缘埋入一处违背时间或常理的微小错位（多出的一双鞋、倒映不同人影的水盆）。",
+            "express": "让调查员不动声色记下或轻触核实，绝不直接喊破惊悚词。",
+            "follow": "捕捉当地人骤然僵住的笑容或同伴悄然扣紧你手腕的微动作。"
+          },
+          "variants": {
+            "brief": "先写正常民俗日常，再在画面边缘埋入一处违背常理的微痕，借冷静核实与旁人僵住的反应渗出压迫感。",
+            "full": "先用热茶、灯火与寒暄建立真实民俗日常，再在角落置入一处违背时间线或礼俗的细微错位；让调查员借翻笔记、核对旧照冷静取证，捕捉旁人瞬间闪躲的视线与同伴悄然递来的安抚。"
+          }
+        }
+      ],
+      "chains": [
+        {
+          "id": "chain.custom.occult_investigation",
+          "label": "怪谈田野调查链",
+          "stages": [
+            {
+              "id": "rumor",
+              "name": "采风听闻",
+              "goal": "收集互相矛盾的地方口述",
+              "action": "走访不同辈分证人，圈出被刻意跳过的旧事",
+              "complete": "锁定两处关键口径冲突",
+              "rollback_to": null,
+              "brief": "走访证人，圈出互相矛盾的禁忌口径。"
+            },
+            {
+              "id": "anomaly",
+              "name": "守夜异象",
+              "goal": "亲历规则生效与环境压迫",
+              "action": "夜间守候观察异常触发规律，测试安全边界",
+              "complete": "摸清一条可复现的规则逻辑",
+              "rollback_to": "rumor",
+              "brief": "守夜亲历异象，摸清可复现触发规律。"
+            },
+            {
+              "id": "breach",
+              "name": "越界取证",
+              "goal": "冒可控风险拿回核心物证",
+              "action": "深入禁地主动试探，搭档紧握现实锚点托底",
+              "complete": "带出物证并承受相应认知代价",
+              "rollback_to": "anomaly",
+              "brief": "涉险深入禁地取证，借搭档锚定脱身。"
+            },
+            {
+              "id": "closure",
+              "name": "平息余波",
+              "goal": "化解封存异常并沉淀生死羁绊",
+              "action": "完成仪轨切断源头，交代幸存者的长久印记",
+              "complete": "事件闭环，生死搭档关系跃迁",
+              "rollback_to": null,
+              "brief": "封存异常源头，沉淀生死羁绊余波。"
+            }
+          ]
+        }
+      ],
+      "tags": [
+        {
+          "id": "custom.occult.field_notes",
+          "label": "田野怪谈笔记",
+          "aliases": [
+            "民俗记录",
+            "异常档案"
+          ],
+          "category": "custom",
+          "owners": [
+            "world",
+            "character",
+            "user"
+          ],
+          "scopes": [
+            "global",
+            "story",
+            "character",
+            "scene"
+          ],
+          "slot": "custom.occult.method",
+          "trigger": {
+            "mode": "any",
+            "types": [
+              "coordinate",
+              "tag"
+            ],
+            "axes": "axis.custom_sanity_stance",
+            "center": {
+              "实证锚定": 75,
+              "守界规避": 65
+            },
+            "radius": {
+              "实证锚定": 28,
+              "守界规避": 28
+            },
+            "weights": {
+              "实证锚定": 1.0,
+              "守界规避": 1.0
+            },
+            "scenes": []
+          },
+          "assist": {},
+          "resources": {
+            "corpora": [
+              "corpus.custom.occult_protocol",
+              "corpus.genre.mystery_horror"
+            ],
+            "techniques": [
+              "tech.custom.occult_clue_reveal",
+              "tech.observe_first"
+            ],
+            "chains": [
+              "chain.custom.occult_investigation"
+            ]
+          },
+          "summary": "随身泛黄笔记本记录口供错位，在诡谲夜色里用冷静理性稳住全局",
+          "preference": 2,
+          "status": "enabled",
+          "version": 2
+        },
+        {
+          "id": "custom.occult.taboo_test",
+          "label": "主动踩线验规",
+          "aliases": [
+            "试探禁忌",
+            "规则反推"
+          ],
+          "category": "custom",
+          "owners": [
+            "character",
+            "user"
+          ],
+          "scopes": [
+            "character",
+            "pair",
+            "scene"
+          ],
+          "slot": "custom.occult.method",
+          "trigger": {
+            "mode": "any",
+            "types": [
+              "coordinate",
+              "tag"
+            ],
+            "axes": "axis.custom_sanity_stance",
+            "center": {
+              "越界试探": 80
+            },
+            "radius": {
+              "越界试探": 28
+            },
+            "weights": {
+              "越界试探": 1.0
+            },
+            "scenes": []
+          },
+          "assist": {},
+          "resources": {
+            "corpora": [
+              "corpus.custom.occult_protocol"
+            ],
+            "techniques": [
+              "tech.custom.occult_clue_reveal",
+              "tech.conflict.stakes"
+            ],
+            "chains": [
+              "chain.custom.occult_investigation"
+            ]
+          },
+          "summary": "明知禁忌危险仍冷静伸手试探边界，把同伴急到红了眼眶也要强行拉回",
+          "preference": 2,
+          "status": "enabled",
+          "version": 2
+        },
+        {
+          "id": "custom.occult.protective_charm",
+          "label": "贴身护符交托",
+          "aliases": [
+            "系红绳",
+            "托付法器"
+          ],
+          "category": "custom",
+          "owners": [
+            "character",
+            "relation",
+            "user"
+          ],
+          "scopes": [
+            "pair",
+            "scene"
+          ],
+          "slot": "micro.focus",
+          "trigger": {
+            "mode": "any",
+            "types": [
+              "tag"
+            ]
+          },
+          "assist": {},
+          "resources": {
+            "corpora": [
+              "corpus.custom.occult_protocol",
+              "corpus.intimacy.sfw_touch"
+            ],
+            "techniques": [
+              "tech.detail.hands",
+              "tech.scene.distance",
+              "tech.relationship.progress"
+            ],
+            "chains": [
+              "chain.intimacy.gradual"
+            ]
+          },
+          "summary": "出发前低头替你把唯一护身红绳/铜钱系在腕间，叮嘱“不许弄丢，也不许出事”",
+          "preference": 2,
+          "status": "enabled",
+          "version": 2
+        }
+      ],
+      "enabled": false
+    },
+    {
+      "manifest": {
+        "package": "custom.court_tension",
+        "name": "朝堂高张力试探私设包",
+        "version": "2.0.0",
+        "schema_version": 2,
+        "author": "user",
+        "description": "零新建坐标组、完全复用内置四极，为古风权谋强强关系提供茶席暗锋与宽袖掩触私设。",
+        "depends": [
+          "builtin>=2.0.0"
+        ],
+        "namespace": "custom.court"
+      },
+      "poles": [],
+      "axes": [],
+      "corpora": [
+        {
+          "id": "corpus.custom.court_etiquette_shield",
+          "label": "朝堂礼制遮掩语料",
+          "domain": "custom",
+          "brief": "众目睽睽下越是衣冠肃穆、言辞恭谦，宽袖之下擦过的微凉指尖与茶盏轻磕就越令人心跳失序。",
+          "full": {
+            "world_rules": [
+              "大庭广众下不得直呼私名或流露逾矩神色，所有威逼与偏爱都披着公事礼数外衣。",
+              "敬茶、递帖、执礼的先后次序直接映射朝堂暗涌的权力位阶。"
+            ],
+            "observable_signals": [
+              "盏盖轻磕青瓷声",
+              "垂落宽袖遮住的桌下勾指",
+              "官称与私名的一字之差"
+            ],
+            "consequences": [
+              "一旦被政敌窥破半分破绽，私情就会立刻化作满朝风雨。"
+            ]
+          }
+        }
+      ],
+      "techniques": [
+        {
+          "id": "tech.custom.court_veiled_edge",
+          "label": "礼制藏锋",
+          "slot": "dynamic.pacing",
+          "purpose": "在滴水不漏的古风礼节外壳下，写出刀光剑影的筹码博弈或暗涌情愫。",
+          "steps": {
+            "observe": "先点明满座宾客、帘后视线或朝堂礼数，确立“绝不可当众失态”的舞台压迫。",
+            "select": "挑选茶盏、折扇、奏折或宽袖中的一件器物作交锋媒介。",
+            "express": "台词字字温雅合规，真实试探或越界藏进递物力度、半拍停顿与称呼微变。",
+            "follow": "落笔对方在众人面前维持云淡风轻、唯有指尖轻颤或眼底暗涌的回敬。"
+          },
+          "variants": {
+            "brief": "先立满座礼制约束，台词严守客套，把试探或暗触藏进器物递取、停顿与称呼微变中。",
+            "full": "先交代旁观视线与礼仪红线确立压迫舞台；借茶盏、折扇或宽袖作掩护，让台词保持温雅恭谦，把筹码施压或私密勾指藏在停顿与称呼一字之差里，紧接描写对方表面镇定下的指尖回敬。"
+          }
+        }
+      ],
+      "chains": [],
+      "tags": [
+        {
+          "id": "custom.court.tea_table_duel",
+          "label": "茶席暗锋",
+          "aliases": [
+            "宴席试探",
+            "礼制交锋"
+          ],
+          "category": "custom",
+          "owners": [
+            "relation",
+            "user"
+          ],
+          "scopes": [
+            "pair",
+            "scene"
+          ],
+          "slot": "dynamic.pacing",
+          "trigger": {
+            "mode": "any",
+            "types": [
+              "coordinate",
+              "tag"
+            ],
+            "axes": "axis.conflict",
+            "center": {
+              "对抗": 72,
+              "克制": 85
+            },
+            "radius": {
+              "对抗": 28,
+              "克制": 28
+            },
+            "weights": {
+              "对抗": 1.0,
+              "克制": 1.0
+            },
+            "scenes": []
+          },
+          "assist": {},
+          "resources": {
+            "corpora": [
+              "corpus.custom.court_etiquette_shield",
+              "corpus.relationship.power_gap"
+            ],
+            "techniques": [
+              "tech.custom.court_veiled_edge",
+              "tech.dialogue.subtext",
+              "tech.conflict.stakes"
+            ],
+            "chains": [
+              "chain.conflict.escalation"
+            ]
+          },
+          "summary": "明面敬茶寒暄滴水不漏，句句笑谈风月却招招直指对方朝堂软肋",
+          "preference": 2,
+          "status": "enabled",
+          "version": 2
+        },
+        {
+          "id": "custom.court.sleeve_brush_signal",
+          "label": "宽袖掩触",
+          "aliases": [
+            "案下暗触",
+            "礼仪越界"
+          ],
+          "category": "custom",
+          "owners": [
+            "relation",
+            "user"
+          ],
+          "scopes": [
+            "pair",
+            "scene"
+          ],
+          "slot": "micro.focus",
+          "trigger": {
+            "mode": "any",
+            "types": [
+              "coordinate",
+              "tag"
+            ],
+            "axes": "axis.intimacy",
+            "center": {
+              "自持": 75,
+              "暗示": 80
+            },
+            "radius": {
+              "自持": 28,
+              "暗示": 28
+            },
+            "weights": {
+              "自持": 1.0,
+              "暗示": 1.0
+            },
+            "scenes": []
+          },
+          "assist": {},
+          "resources": {
+            "corpora": [
+              "corpus.custom.court_etiquette_shield"
+            ],
+            "techniques": [
+              "tech.detail.hands",
+              "tech.scene.distance",
+              "tech.emotion.subtext"
+            ],
+            "chains": [
+              "chain.intimacy.gradual"
+            ]
+          },
+          "summary": "满殿灯火丝竹里端坐如松，案下垂落的宽袖里却悄悄勾住了对方的指节",
+          "preference": 2,
+          "status": "enabled",
+          "version": 2
+        }
+      ],
+      "enabled": false
+    }
+  ]
+}
