@@ -7,6 +7,15 @@ export const preferenceStyles=`
 #tisya-shell .tisya-preferences [data-preference-group]{margin:15px 0;padding:12px 14px 14px;border:1px solid var(--pref-border);border-radius:12px;background:linear-gradient(125deg,#18403369,#09271e35)}
 #tisya-shell .tisya-preferences [data-preference-group]>legend{padding:0 7px;color:#e1d8b5;font-size:15px;letter-spacing:.02em}
 #tisya-shell .tisya-preferences .tisya-select{border-radius:8px;padding:10px 36px 10px 12px;min-height:46px;background:#0b2b23;border-color:#b9a66d45;font-size:15px}
+#tisya-shell .tisya-preferences .preference-tag-results{display:grid;gap:8px;width:100%;max-width:100%;min-width:0;box-sizing:border-box;max-height:min(30rem,55dvh);overflow:auto;overscroll-behavior:contain;padding:4px}
+#tisya-shell .tisya-preferences .preference-tag-option{display:grid;grid-template-columns:24px minmax(0,1fr);align-items:start;gap:10px;width:100%;max-width:100%;min-width:0;box-sizing:border-box;margin:0!important;padding:12px;border:1px solid var(--pref-border);border-radius:9px;background:#0b2b23;cursor:pointer}
+#tisya-shell .tisya-preferences .preference-tag-option:has(input:checked){border-color:#c8b78599;background:#173e31}
+#tisya-shell .tisya-preferences .preference-tag-option>input{width:20px;height:20px;margin:2px 0 0;accent-color:#c8b785}
+#tisya-shell .tisya-preferences .preference-tag-copy{display:grid;gap:4px;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+#tisya-shell .tisya-preferences .preference-tag-copy>strong{color:#e1d8b5;font-size:14px;font-weight:500;line-height:1.5}
+#tisya-shell .tisya-preferences .preference-tag-copy>small{color:var(--pref-muted);font:11px/1.55 ui-monospace,monospace;white-space:normal}
+#tisya-shell .tisya-preferences .preference-tag-selection,#tisya-shell .tisya-preferences .preference-tag-result-count{margin:9px 2px;color:var(--pref-muted);font-size:12px;line-height:1.65;overflow-wrap:anywhere}
+#tisya-shell .tisya-preferences [data-preference-section="tag-library"]>.menu_button{width:100%;min-height:44px;margin:4px 0 8px;white-space:normal}
 #tisya-shell .tisya-preferences .preference-actions{display:flex;gap:5px 12px;flex-wrap:wrap;align-items:center}
 #tisya-shell .tisya-preferences .preference-actions:empty{display:none}
 #tisya-shell .tisya-preferences .preference-actions>.menu_button{background:none;border:0;border-radius:4px;margin:0;padding:6px 0;font-size:12px;color:#b9c5ad;min-height:36px}

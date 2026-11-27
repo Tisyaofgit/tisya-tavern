@@ -67,6 +67,18 @@ test('custom item is created from the actual UI, saved and compiled; switching c
  u.ui.dispose();await u.w.happyDOM.abort();
 });
 
+test('tag library uses accessible multi-select cards, batches only selected tags into pending drafts and keeps footer actions horizontal',async()=>{
+ const {host}=await fixture(),u=await uiFor(host),library=u.root.querySelector('[data-preference-section="tag-library"]');assert(library);assert.equal(library.querySelector('select'),null);
+ const options=[...library.querySelectorAll('[data-tag-option]')];assert(options.length>1&&options.length<=60);assert(library.querySelector('[aria-label="标签搜索结果"]'));
+ for(const option of options.slice(0,2)){const check=option.querySelector('input[type="checkbox"]');check.checked=true;check.dispatchEvent(new u.w.Event('change'));}
+ assert.match(library.querySelector('.preference-tag-selection').textContent,/已选：/);const add=[...library.querySelectorAll('button')].find(b=>b.textContent==='将已选 2 个标签加入待确认');assert(add);assert.equal(add.disabled,false);add.click();await u.ui.settled();
+ const pending=[...u.root.querySelectorAll('[data-user-preference]')];assert.equal(pending.length,2);assert.equal(Object.keys((await host.readDatabase()).state.tables.T_PREF_SCOPES??{}).length,0,'adding cards must not write formal preferences before save');
+ const expected=options.slice(0,2).map(option=>option.dataset.tagOption).sort();assert.deepEqual(pending.map(row=>row.querySelector('summary').textContent.split(' · ')[1]).sort(),expected);
+ assert.equal(u.w.getComputedStyle(u.root.querySelector('.tisya-settings-actions')).display,'grid');
+ for(const label of ['取消修改','保存']){const control=[...u.root.querySelectorAll('.tisya-settings-actions button')].find(b=>b.textContent===label),style=u.w.getComputedStyle(control);assert.equal(style.whiteSpace,'nowrap');assert.equal(style.writingMode,'horizontal-tb');}
+ click(u.root,'保存');await u.ui.settled();assert.deepEqual(u.errors,[]);const saved=Object.values((await host.readDatabase()).state.tables.T_PREF_SCOPES??{});assert.equal(saved.length,2);assert(saved.every(row=>row.values.confirmation_state==='用户确认候选'));assert.equal(u.root.querySelectorAll('[data-user-preference]').length,2);
+ u.ui.dispose();await u.w.happyDOM.abort();
+});
 test('user feedback and directive keep separate formal fields, survive reopen and reach payload only while enabled',async()=>{
  const {host,source,expand}=await fixture();const db0=await host.readDatabase(),old={id:'existing-user',group:'USER',selection:'\"existing-user\"',kind:'user',name:'已有偏好',text:'原有指令',evidence_quote:'我不想每次都被问选A还是B',enabled:true};await host.commitDatabase({operationId:'seed-user',expectedRevision:db0.revision,contextKey:db0.contextKey,changes:preferenceTextChanges({}, {[preferenceTextKey('USER',old.id)]:old}),source:{kind:'test'}});const u=await uiFor(host);assert(![...u.root.querySelectorAll('button')].some(n=>/新建用户偏好|复制用户偏好/.test(n.textContent)));
  let row=u.root.querySelector('[data-user-preference]');const name=row.querySelector('[aria-label="用户偏好名称"]'),quote=row.querySelector('[aria-label="用户反馈原话"]'),directive=row.querySelector('[aria-label="用户偏好完整创作指令"]');

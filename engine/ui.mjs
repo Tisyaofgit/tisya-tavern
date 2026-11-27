@@ -32,10 +32,10 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
  #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}
  #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-config{flex:1 1 0;min-height:0;height:auto}
  .tisya-matrix-content{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scroll-padding-block:12px}
- .tisya-matrix-config .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 0 max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}
- .tisya-matrix-config .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+ .tisya-matrix-config .tisya-settings-actions,#tisya-shell .tisya-matrix-config .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);width:100%;min-width:0;box-sizing:border-box;gap:10px;margin:0;padding:10px 0 max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}
+ .tisya-matrix-config .tisya-settings-actions p,#tisya-shell .tisya-matrix-config .tisya-settings-actions p{grid-column:1/-1;min-width:0;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
  .tisya-matrix-config .tisya-settings-actions p:empty{display:none}
- .tisya-matrix-config .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}
+ .tisya-matrix-config .tisya-settings-actions button,#tisya-shell .tisya-matrix-config .tisya-settings-actions button{display:inline-flex;align-items:center;justify-content:center;width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px!important;white-space:nowrap;word-break:keep-all;overflow-wrap:normal;writing-mode:horizontal-tb;line-height:1.4}
  .tisya-matrix-config .tisya-settings-actions button:disabled{opacity:.5;cursor:default}
  .tisya-matrix-config .tisya-directory-buttons{display:flex;flex-wrap:wrap;gap:6px}
  .tisya-matrix-config .tisya-sub-card button{min-height:44px;white-space:normal;max-width:100%}
