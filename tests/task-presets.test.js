@@ -7,7 +7,7 @@ import {TASK_PROFILES,taskProfile,SIMPLE_FORM_CONTRACT} from '../tables/task-pro
 import matrixReply from '../presets/Tisya-Matrix.json' with {type:'json'};
 import {SLOT_NAMES,SLOT_TARGETS} from '../tables/slots.js';
 import {cardAIMaterials,cardDefinitionSource,bookAIMaterials} from '../tables/card-source.js';
-import {historyEvidence,prepareCommit} from '../tables/ledger.js';
+import {historyEvidence} from '../engine/reply.mjs';
 import {defaultRegistry} from '../tables/schema.js';
 
 const configuration={data:emptyConfig(),world:defaultWorld()};
@@ -62,14 +62,6 @@ test('manual multi-reply history keeps every body and interleaved user definitio
  const raw='用户设定甲\n<reply><body>第一件事。<memory>不可信旧摘要</memory></body><status>不可信旧状态</status></reply>\n用户设定乙\n<reply><body>第二件事。</body><vars>不可信命令</vars></reply>';
  const text=historyEvidence(raw);for(const part of ['用户设定甲','第一件事。','用户设定乙','第二件事。'])assert(text.includes(part));assert.doesNotMatch(text,/不可信|<body>|<reply>/);
 });
-
-test('manual old or undated history cannot overwrite current sourced state, later evidenced time can',()=>{
- const registry=defaultRegistry(),access={readers:['读者'],knowers:[]},view={registry,rows:[{id:'scene',table:'scene',rev:1,values:{名称:'当前',当前时间:'2026-10-12 12:00',场景:'城内'},access,source:'known'}],anchors:[{row:'scene',worldTime:'2026-10-12 12:00'}],last:null};
- const proposal={changes:[{id:'scene',table:'scene',expected:1,values:{场景:'城外'},access,evidence:'抵达城外'}]};
- for(const worldTime of [null,'未知','2026-10-12 11:59'])assert.throws(()=>prepareCommit(view,proposal,{source:null,kind:'import',evidence:'抵达城外',worldTime,allowedTables:['scene']}),/不能覆盖已有当前状态/);
- assert.equal(prepareCommit(view,proposal,{source:null,kind:'import',evidence:'2026-10-12 12:01 抵达城外',worldTime:'2026-10-12 12:01',allowedTables:['scene']}).rows[0].values.场景,'城外');
-});
-
 
 test('actual archive request separates operational blockers and inaccessible corrections from source data',()=>{
  const material={archiveSource:{text:'客人说稍后回来。'},userSource:{text:'旧余额为NaN；绝对钟点未知。'},registry:defaultRegistry(),currentRows:[]};

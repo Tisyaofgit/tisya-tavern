@@ -1,8 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {Window} from 'happy-dom';
 import {createNativeConfiguration,createRegexGate,validateNativeConfig,NATIVE_PATH} from '../tables/native-config.js';
-import {nativeConfigForm} from '../tables/native-config-ui.js';
 function fixture(){
  const books=new Map(),presets=new Map([['原预设',{extensions:{user:{keep:true}},prompts:[]}]]),regex=new Map(),globalBooks=['用户全局书'],card={primary:'用户角色主书',additional:['用户追加书']},writes=[],gates=new Set();let selected='原预设',uid=0;
  const manager={getSelectedPresetName:()=>selected,readPresetExtensionField:({name,path})=>presets.get(name)?.extensions?.tisya?.worldbooks??null,writePresetExtensionField:async({name,path,value})=>{assert.equal(path,NATIVE_PATH);writes.push(['preset-field',name]);const p=presets.get(name);p.extensions.tisya??={};p.extensions.tisya.worldbooks=value;}};
@@ -29,12 +27,6 @@ test('preset worldbooks scan only for the selected preset and deduplicate existi
 test('switching chat during creation halts remaining mutations and preserves a partial receipt',async()=>{
  const f=fixture(),original=f.helper.createWorldbook;f.helper.createWorldbook=async(...args)=>{const result=await original(...args);f.context.chatId='other';return result;};await assert.rejects(f.api.apply(spec()),e=>{assert(e.receipts.some(x=>x.kind==='预设'));return /切换/.test(e.message);});assert.equal(f.regex.size,0);assert.equal(f.card.additional.length,1);
 });
-test('native configuration can be authored through actual visual fields and source/scope selectors',async()=>{
- const w=new Window(),d=w.document;Object.defineProperty(w.HTMLTextAreaElement.prototype,'type',{get(){return 'textarea';},configurable:true});const read=nativeConfigForm(d,d.body),click=t=>{const b=[...d.querySelectorAll('button')].find(x=>x.textContent===t);assert(b,t);b.click();},set=(label,value)=>{const e=d.querySelector('[aria-label="'+label+'"]');assert(e,label);e.value=value;e.dispatchEvent(new w.Event('input'));};
- click('新增世界书');set('世界书名称','花园');click('添加世界书条目');set('条目名称','花墙');set('条目内容','位于南侧');const constant=d.querySelector('[aria-label="蓝灯常驻（关闭为关键词绿灯）"]');constant.checked=true;constant.dispatchEvent(new w.Event('input'));assert.equal(read().worldbooks[0].entries[0].content,'位于南侧');assert.equal(read().worldbooks[0].scope,'character');click('删除条目');assert.deepEqual(read().worldbooks[0].entries,[]);await w.happyDOM.abort();
-});
-
-
 test('native regex gates respect disabled extension and roll back an unconfirmed allow-list save',async()=>{
  const context={characters:[{avatar:'hero.png'}],extensionSettings:{disabledExtensions:['regex'],character_allowed_regex:['existing']}};let saved=0,success=true;const gate=createRegexGate({getContext:()=>context,isScopedScriptsAllowed:c=>context.extensionSettings.character_allowed_regex.includes(c.avatar),allowScopedScripts:c=>context.extensionSettings.character_allowed_regex.push(c.avatar),isPresetScriptsAllowed:()=>false,allowPresetScripts:()=>{},saveSettings:async()=>{saved++;return success;}});
  await gate.enable('character','hero.png');assert.equal(saved,0);assert.equal(gate.allowed('global',''),false);assert.deepEqual(context.extensionSettings.character_allowed_regex,['existing']);context.extensionSettings.disabledExtensions=[];success=false;await assert.rejects(gate.enable('character','hero.png'),/未确认/);assert.deepEqual(context.extensionSettings.character_allowed_regex,['existing']);success=true;await gate.enable('character','hero.png');assert.equal(gate.allowed('character','hero.png'),true);

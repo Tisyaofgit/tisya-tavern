@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createFinalProjectionCache} from '../engine/final-projection-cache.mjs';
+import {createFinalProjectionCache,compactRuntimeWorkspace,authoritativeWorkspace} from '../engine/final-projection-cache.mjs';
+
+test('short runtime workspaces omit journal backups and reattach the sole authority before replay',async()=>{
+ const authoritative={local_revision:4,state:{schema:{},tables:{current:1}},journal:{scope:{branch:'main'},entries:[{uid:'turn',inverse:'large-backup'}]},manual_edits:[{uid:'manual'}]},short=compactRuntimeWorkspace({bundle:authoritative,materials:{slot:'当前资料'}});
+ assert.notEqual(short.bundle,authoritative);assert.deepEqual(short.bundle.journal.entries,[]);assert.equal(short.bundle.state,authoritative.state);assert.deepEqual(short.bundle.manual_edits,authoritative.manual_edits);assert.deepEqual(authoritative.journal.entries,[{uid:'turn',inverse:'large-backup'}]);
+ let reads=0;const storage={get:async()=>{reads++;return structuredClone(authoritative);}};assert.deepEqual(await authoritativeWorkspace(storage,'chat',short.bundle),authoritative);assert.equal(reads,1);
+ await assert.rejects(authoritativeWorkspace(storage,'chat',{...short.bundle,local_revision:5}),/修订不一致/);
+});
 
 test('final projections survive a cold cache instance only for identical authoritative input',async()=>{
  const disk=new Map(),storage={get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>disk.set(key,structuredClone(value))};let calls=0;

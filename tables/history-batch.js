@@ -1,6 +1,6 @@
 import {digest,stableId} from '../engine/common.mjs';
 import {memoryMessageRows} from '../engine/memory-status.mjs';
-import {archivalText} from './ledger.js';
+import {archivalText} from '../engine/reply.mjs';
 import {normalizeEnvelope} from '../engine/tags.mjs';
 import {Runtime} from '../engine/runtime.mjs';
 import {applyMatrixChanges} from './foundation/engine.js';

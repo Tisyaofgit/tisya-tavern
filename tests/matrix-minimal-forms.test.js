@@ -43,6 +43,14 @@ for(const legacy of [false,true])test('schema row gaps and '+(legacy?'legacy com
  const projected=materials(e,scope,'渡口');assert.match(projected.tisya_material_memory_excerpt,/第1条已接纳回复.*P1/s);assert.doesNotMatch(projected.tisya_material_memory_excerpt,/sha256|typed-(?:true|false)@/);
 });
 
+test('bare local group ordinals resolve only against the declared reference target',()=>{
+ const e=engine();e.newRecord('T_STATIC_ITEMS_SKILLS',{name:'油灯'},'lamp');const c=context(e);
+ const cells=section(c,'T_DYN_HOLDINGS_INVENTORY',{item_ref:'油灯',instance_name:'旧油灯',last_transfer_ref:'1'})+'\n'+section(c,'T_DYN_TRANSFERS',{holding_ref:'1',quantity:1,unit:'个'});
+ apply(e,c,cells);const holding=Object.values(e.rows('T_DYN_HOLDINGS_INVENTORY'))[0],transfer=Object.values(e.rows('T_DYN_TRANSFERS'))[0];
+ assert.equal(holding.values.last_transfer_ref,Object.keys(e.rows('T_DYN_TRANSFERS'))[0]);assert.equal(transfer.values.holding_ref,Object.keys(e.rows('T_DYN_HOLDINGS_INVENTORY'))[0]);
+ const wrong=context(e);assert.throws(()=>apply(e,wrong,section(wrong,'T_DYN_TRANSFERS',{event_ref:'1'})),/关联名称不存在|事件/);
+});
+
 test('duplicate field labels remain stable across author and ordinary scopes',()=>{
  const e=engine();e.registerTable('SAME_LABEL',[{key:'private',label:'说明',type:'TEXT',lock_level:'D'},{key:'public',label:'说明',type:'TEXT'}],'双说明');
  const author=context(e,{scope:{...scope,audience:'author'}}),reader=context(e,{scope:{...scope,audience:'character'}}),get=c=>c.catalog.templates.find(t=>t.id==='SAME_LABEL').fields.find(f=>f.key==='public');

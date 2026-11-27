@@ -1,7 +1,7 @@
 import {projectDatabaseIdentity} from './engine/identity.mjs';
 import {createPersonaSlots} from './persona-slots.js';
 const clone=x=>structuredClone(x),stamp=x=>JSON.stringify(x),check=(v,m)=>{if(!v)throw Error(m)};
-export function createIdentityService({getContext,getAvatar,applyActive,persistSettings,persistChat,assertIdle=()=>{},validateSelection=async()=>{},afterSelect=async()=>{},convertCharacter,slotHost,resolveOrigin,matrixDatabase=null,openNative,openPage,onChanged=()=>{}}){
+export function createIdentityService({getContext,getAvatar,applyActive,persistSettings,persistChat,assertIdle=()=>{},validateSelection=async()=>{},afterSelect=async()=>{},convertCharacter,slotHost,resolveOrigin=async()=>{throw Error('旧原点书身份已退役；请从当前 Matrix 人物档案创建身份');},matrixDatabase=null,openNative,openPage,onChanged=()=>{}}){
  const listeners=new Set();let busy=false;
  const power=()=>getContext().powerUserSettings??{};
  const scope=()=>{const c=getContext();return {chatId:c.chatId??null,characterAvatar:c.groupId!=null?null:c.characters?.[c.characterId]?.avatar??null,groupId:c.groupId??null}};

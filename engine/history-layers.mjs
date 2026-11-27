@@ -38,19 +38,18 @@ export const historyBody=text=>historySource(text).text;
 function historyMessage(label,message,text=message?.text){return message&&text?.trim()?label+'\n'+quotedHistory(text.trim()):'';}
 export function projectHistoryLayers({messages,archives=[],scope,historyCount=10,currentCommand=null}){
  check(Number.isSafeInteger(historyCount)&&historyCount>=0,'历史消息条数须为非负整数。');
- const rows=selectedMessages(messages,scope),audit=[],bodyCache=new Map();
+ const rows=selectedMessages(messages,scope),audit=[];
  let current=currentCommand;
  if(!current&&rows.at(-1)?.role==='user')current=rows.at(-1);
  if(current){check(current.scope===scope&&current.role==='user'&&typeof current.text==='string'&&current.id,'本轮命令来源不匹配。');const same=rows.find(m=>m.id===current.id);check(!same||sourceVersion(same)===sourceVersion(current),'本轮命令与历史记录不一致。');}
  const past=rows.filter(m=>m.id!==current?.id&&(!current||m.floor<current.floor));
  const last=past.findLast(m=>m.role==='assistant');
  const previous=last?past.findLast(m=>m.role==='user'&&m.floor<last.floor):null;
- const window=historyCount?past.slice(-historyCount):[];
- const recent=[];
- for(const m of window.filter(m=>m.role==='assistant'&&m.id!==last?.id)){
-  try{const {text,format}=historySource(m.text);bodyCache.set(m.id,text);recent.push({...m,body:text,format});audit.push({id:m.id,floor:m.floor,layer:'recent_body',format,reason:format==='legacy_source'?'所选消息窗口内的旧版原文；未作为结构化指令执行':'所选消息窗口内的char正文'});}
-  catch(error){audit.push({id:m.id,floor:m.floor,layer:'excluded',reason:'正文边界/段号无法可靠读取：'+error.message});}
- }
+ // Historical prose stays in the verified source store. Only the chain head
+ // enters the ordinary prompt; older passages return through the reviewed
+ // timeline recall service instead of a second sliding raw-body window.
+ const window=[],recent=[];
+ for(const m of past.filter(m=>m.role==='assistant'&&m.id!==last?.id))audit.push({id:m.id,floor:m.floor,layer:'timeline_source',reason:'历史正文保留在来源库，仅由统一时间轴按需召回'});
  let latestBody='';
  if(last)try{latestBody=historySource(last.text).text;}
  catch(error){audit.push({id:last.id,floor:last.floor,layer:'excluded',reason:'上一轮正文无法读取：'+error.message});}
@@ -70,7 +69,7 @@ export function projectHistoryLayers({messages,archives=[],scope,historyCount=10
    if(m.id===last?.id&&link.block==='body'&&latestBody.includes(link.quote)){covered=true;placement='recent_situation';break;}
    if(m.id===previous?.id&&m.text.includes(link.quote)){covered=true;placement='recent_situation';break;}
    if(m.id===current?.id&&m.text.includes(link.quote)){covered=true;placement='recent_situation';break;}
-   if(link.block==='body'&&recentIds.has(m.id)&&bodyCache.get(m.id)?.includes(link.quote)){covered=true;placement='recent_body';break;}
+   if(link.block==='body'&&recentIds.has(m.id)){covered=true;placement='timeline_source';break;}
   }
   if(covered)audit.push({id:unit.id,layer:placement,reason:'已核对的同一信息点由此层承载，归档不重复'});
   else{record.push(unit);audit.push({id:unit.id,layer:'history_record',reason:'已确认独立归档信息点'});}
@@ -91,5 +90,6 @@ export function projectHistoryLayers({messages,archives=[],scope,historyCount=10
    historyMessage('上轮用户',previous),historyMessage('上轮正文',last,latestBody),historyMessage('本轮用户',current)
   ].filter(Boolean))
  };
- return {layers,archiveUnits:finalRecord,recentBodies:recent,recentSituation,audit,window:{configured:historyCount,counted:'历史user与char消息合计；本轮命令另算',sourceIds:window.map(m=>m.id)},sourceSignature:digest(rows),nativeHistoryCompatible:false};
+ const chainHead={previousUser:previous??null,assistant:last??null,assistantBody:latestBody,currentUser:current??null};
+ return {layers,archiveUnits:finalRecord,recentBodies:recent,recentSituation,chainHead,audit,window:{configured:historyCount,counted:'历史正文不进入主上下文；仅保留链头，本轮命令另算',sourceIds:window.map(m=>m.id)},sourceSignature:digest(rows),nativeHistoryCompatible:false};
 }

@@ -15,7 +15,46 @@ export function expandPermission(value){
 }
 
 const fail=code=>{throw Object.assign(Error('TISYA_MEMORY5_'+code),{code:'TISYA_MEMORY5_'+code});};
+const outputFail=code=>{throw Object.assign(Error('TISHA_OUTPUT_'+code),{code:'TISHA_OUTPUT_'+code});};
 function hasPath(root,parts){let value=root;for(const part of parts){if(value===null||typeof value!=='object'||!Object.hasOwn(value,part))return false;value=value[part];}return true;}
+
+// proposals is a machine-only extension of the modern display envelope. Keep
+// the vendored ten-block parser authoritative: remove exactly one direct block
+// between archive and memory, then restore its raw payload and wire metadata.
+function proposalEnvelope(source,original){
+ const region=original.replyRegion(source).source,children=[];let depth=0,proposal=null;
+ for(const token of original.xmlTokens(region)){
+  if(token.kind==='comment'&&proposal&&!proposal.close&&/填写|占位/.test(token.value))outputFail('PLACEHOLDER');
+  if(token.kind==='open'){
+   if(depth===1){
+    children.push(token.name);
+    if(token.name==='proposals'){
+     if(proposal)outputFail('BLOCK_ORDER');
+     proposal={open:token,close:token.selfClose?token:null};
+    }
+   }else if(proposal&&!proposal.close)outputFail('NESTED_BLOCK_PROPOSALS');
+   if(!token.selfClose)depth++;
+  }else if(token.kind==='close'){
+   if(proposal&&!proposal.close&&depth===2&&token.name==='proposals')proposal.close=token;
+   depth--;
+  }
+ }
+ if(!proposal)return {source,e:null};
+ if(!proposal.close)outputFail('INCOMPLETE');
+ const index=children.indexOf('proposals');
+ if(children[index-1]!=='archive'||children[index+1]!=='memory')outputFail('BLOCK_ORDER');
+ const {open,close}=proposal,raw=open.selfClose?'':region.slice(open.end,close.start);
+ return {source:region.slice(0,open.start)+region.slice(close.end),e:{raw,attrs:{...open.attrs}}};
+}
+function restoreProposal(e,proposal){
+ if(!proposal)return e;
+ e.blocks.proposals=proposal.raw;e.attrs.proposals={...proposal.attrs};
+ if(e.wire){
+  const order=e.wire.order,index=order.indexOf('archive');order.splice(index<0?order.length:index+1,0,'proposals');
+  e.wire.attrs.proposals={...proposal.attrs};
+ }
+ return e;
+}
 
 // Source cards use XML components with either XML fields or [Field|value]
 // records. Match an actual direct field of one unique component, not arbitrary
@@ -62,9 +101,9 @@ export function adaptReaderModule(id,original,load){
    return nativeStatusTail(nativeUpdateTail(nativeStatusInVars(source,original.xmlTokens,parse),original.xmlTokens,parse),original.xmlTokens);
   };
   const envelope=source=>{
-   const e=original.parseDisplayEnvelope(normalize(source));
+   const adapted=proposalEnvelope(normalize(source),original),e=original.parseDisplayEnvelope(adapted.source);
    e.blocks.vars=sourceVarsJSON(e.blocks.vars,load('strict-json.cjs').strictJSON);
-   return e;
+   return restoreProposal(e,adapted.e);
   };
   const regexEnvelope=source=>envelope(displayRecordSource(normalize(source),original.xmlTokens,load('pipes-wire.cjs').records));
   return {...original,parseDisplayEnvelope:envelope,parseRegexEnvelope:regexEnvelope,replyRegion:(source,options)=>original.replyRegion(options?.partial?source:normalize(source),options)};

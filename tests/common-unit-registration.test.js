@@ -71,15 +71,15 @@ test('calendar seasons, unqualified quarters and age-counting labels are not sil
 });
 
 test('Chinese quantity numbers parse exact integers, decimals, signs and mixed notation without guessing abbreviations',()=>{
- const cases=[['三',3],['十二',12],['二十点五',20.5],['负三点五',-3.5],['壹佰零伍',105],['一万二千',12000],['一万三千零二',13002],['零',0],['一亿零三万',100030000],['3点5',3.5],['三点5',3.5]];
+ const cases=[['三',3],['半',0.5],['十二',12],['二十点五',20.5],['负三点五',-3.5],['壹佰零伍',105],['一万二千',12000],['一万三千零二',13002],['零',0],['一亿零三万',100030000],['3点5',3.5],['三点5',3.5]];
  for(const [raw,expected]of cases)assert.equal(parseQuantityNumber(raw),expected,raw);
  for(const raw of ['三三','三万五','一万二千三','一万三千二','一万零三千二','一万二万','一零二','一万二零','十十','三.点.五',''])assert.equal(parseQuantityNumber(raw),null,raw);
- assert.equal(parseQuantityShorthand('三尺').value,3);assert.equal(parseQuantityShorthand('三米').unit,'米');assert.equal(parseQuantityShorthand('约三米').narrativeOnly,true);assert.equal(parseQuantityShorthand('三米左右').narrativeOnly,true);assert.equal(parseQuantityShorthand('三万五米'),null);
+ assert.equal(parseQuantityShorthand('三尺').value,3);assert.equal(parseQuantityShorthand('三米').unit,'米');for(const unit of ['寸','步','米'])assert.deepEqual(parseQuantityShorthand('半'+unit),{text:'半'+unit,value:0.5,unit,narrativeOnly:false});assert.equal(parseQuantityShorthand('约三米').narrativeOnly,true);assert.equal(parseQuantityShorthand('三米左右').narrativeOnly,true);assert.equal(parseQuantityShorthand('三万五米'),null);
 });
 
 test('Chinese shorthand and explicit quantity properties share exact storage while approximate text remains narrative only',()=>{
  const e=fresh();e.registerTable('UNIT_MEASURE',[{key:'amount',label:'数量',type:'CHILD_REF',ref:'M_QUANTITIES',source_type:'LONG_TEXT'}],'单位样本');
- const cases=[['三尺',3,'尺'],['三米',3,'米'],['3米',3,'米'],['十二米',12,'米'],['二十点五米',20.5,'米'],['负三米',-3,'米'],['数值：三；单位：米',3,'米'],['数值：三 米',3,'米']];
+ const cases=[['三尺',3,'尺'],['三米',3,'米'],['半寸',0.5,'寸'],['半步',0.5,'步'],['0.5米',0.5,'米'],['3米',3,'米'],['十二米',12,'米'],['二十点五米',20.5,'米'],['负三米',-3,'米'],['数值：三；单位：米',3,'米'],['数值：三 米',3,'米']];
  const c=context(e),t=c.catalog.templates.find(t=>t.id==='UNIT_MEASURE'),cells=cases.map(([value],i)=>'【单位样本／'+(i+1)+'】\n'+t.fields[0].row+'：'+value).join('\n'),{copy}=compile(e,cells),quantities=Object.values(copy.rows('UNIT_MEASURE')).map(row=>copy.rows('M_QUANTITIES')[row.values.amount].values);
  quantities.forEach((q,i)=>{assert.equal(q.quantity_mode,'exact');assert.equal(q.value,cases[i][1]);assert.equal(copy.rows('M_UNITS')[q.unit_ref].values.label,cases[i][2]);});assert.equal(Object.keys(copy.rows('M_UNIT_RATIOS')).length,0);
  const narrative=['约三米','三米多','三米左右','三米（当前阶段）'],text=narrative.map((value,i)=>'【单位样本／'+(i+9)+'】\n'+t.fields[0].row+'：'+value).join('\n'),next=compile(copy,text,'narrative-quantities').copy;

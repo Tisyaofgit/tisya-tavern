@@ -6,9 +6,9 @@ const wrap=body=>'<reply><task>不可进入近期</task><body>'+body+'</body><ex
 const m=(id,floor,role,text)=>({id,floor,role,text,scope:'s',revision:1});
 const messages=[m('u1',1,'user','旧用户秘密甲'),m('a1',2,'assistant',wrap('1 他在第2026号门前留下约定。\n\n2 明日见。')),m('u2',3,'user','旧用户秘密乙'),m('a2',4,'assistant',wrap('1 你抵达渡口。')),m('u3',5,'user','上一条用户原文 <x> &'),m('a3',6,'assistant',wrap('1 沈青接过信。')),m('u4',7,'user','本轮继续，保留格式。')];
 const archive=(id,source,text,extra={})=>({id,factId:id,scope:'s',status:'confirmed',text,source:{messageId:source.id,version:sourceVersion(source)},...extra});
-test('three layers retain complete latest triplet, only windowed earlier char body, and no old user text',()=>{
+test('history keeps only the complete chain head and leaves older prose to timeline recall',()=>{
  const result=projectHistoryLayers({messages,scope:'s',historyCount:4,archives:[archive('old',messages[1],'已确认远史约定。')]});
- assert.deepEqual(result.recentBodies.map(m=>m.id),['a2']);assert.equal(result.recentBodies[0].body,'你抵达渡口。');
+ assert.deepEqual(result.recentBodies,[]);assert.equal(result.layers.recentBody,'');assert.equal(result.chainHead.assistantBody,'沈青接过信。');assert(result.audit.some(x=>x.id==='a2'&&x.layer==='timeline_source'));
  assert.equal(result.recentSituation.previousUser.text,messages[4].text);assert.equal(result.recentSituation.assistant.text,messages[5].text);assert.equal(result.recentSituation.currentUser.text,messages[6].text);
  const all=Object.values(result.layers).join('');assert(!all.includes('旧用户秘密'));assert(!result.layers.recentBody.includes('额外区块'));assert(!result.layers.recentBody.includes('机器归档'));assert.match(result.layers.recentSituation,/上轮正文\n沈青接过信/);assert.doesNotMatch(all,/额外区块|机器归档|CDATA|<reply>/);
  assert.equal((all.match(/沈青接过信/g)??[]).length,1);assert(all.includes('已确认远史约定'));
@@ -23,7 +23,7 @@ test('reviewed fact coverage deduplicates by information identity, preserving in
  const source=messages[3],coverage=[{reviewed:true,messageId:source.id,version:sourceVersion(source),block:'body',quote:'你抵达渡口。'}];
  const a=archive('arrival',source,'你已经到了渡口。',{coverage}),b=archive('secret',source,'沈青仍不知信件内容。');
  const r=projectHistoryLayers({messages,scope:'s',historyCount:5,archives:[a,b,{...a,id:'duplicate'}]});
- assert.deepEqual(r.archiveUnits.map(x=>x.id),['secret']);assert(r.audit.some(x=>x.id==='arrival'&&x.layer==='recent_body'));
+ assert.deepEqual(r.archiveUnits.map(x=>x.id),['arrival','secret']);assert(r.audit.some(x=>x.id==='arrival'&&x.layer==='history_record'));
 });
 test('same source is insufficient to remove independent facts; unreviewed or stale coverage is not trusted',()=>{
  const src=messages[3];const base=archive('keep',src,'单独核对的认知',{coverage:[{reviewed:false,messageId:src.id,version:sourceVersion(src),block:'body',quote:'你抵达渡口。'}]});
@@ -41,7 +41,7 @@ test('latest complete reply also carries reviewed evidence spanning numbered par
  const r=projectHistoryLayers({messages:messages.map(m=>m.id===src.id?src:m),scope:'s',archives:[unit]});
  assert.equal(r.archiveUnits.length,0);assert.equal(r.recentSituation.assistant.text,src.text);assert.equal((Object.values(r.layers).join('').match(/沈青接过信/g)??[]).length,1);
 });
-test('old malformed/untagged replies are reported, not flattened with machine blocks into body history',()=>{const r=projectHistoryLayers({messages:[...messages.map(x=>x.id==='a2'?{...x,text:'纯文本旧回复 <extra>机器内容</extra>'}:x)],scope:'s',historyCount:5});assert(!r.recentBodies.some(x=>x.id==='a2'));assert(r.audit.some(x=>x.id==='a2'&&x.layer==='excluded'));});
+test('old malformed replies stay in the source store without entering chain-head parsing',()=>{const r=projectHistoryLayers({messages:[...messages.map(x=>x.id==='a2'?{...x,text:'纯文本旧回复 <extra>机器内容</extra>'}:x)],scope:'s',historyCount:5});assert(!r.recentBodies.some(x=>x.id==='a2'));assert(r.audit.some(x=>x.id==='a2'&&x.layer==='timeline_source'));});
 test('unconfirmed/other-branch/deleted-source archive entries are excluded and conflicting fact IDs rejected',()=>{
  const unit=archive('x',messages[1],'旧约定');const r=projectHistoryLayers({messages,scope:'s',archives:[{...unit,status:'pending'},{...unit,id:'other',scope:'another'},{...unit,id:'stale',source:{...unit.source,version:'old'}}]});assert.equal(r.archiveUnits.length,0);
  assert.throws(()=>projectHistoryLayers({messages,scope:'s',archives:[unit,{...unit,id:'x2',text:'矛盾约定'}]}),/冲突/);

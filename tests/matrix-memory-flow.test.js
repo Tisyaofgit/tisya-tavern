@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {memoryFlow,memoryForm,memoryReply,intakeReply} from './fixtures/memory-flow.mjs';
 import {indexedStorage} from '../engine/controller.mjs';
 import {IDBFactory} from 'fake-indexeddb';
-import {historyEvidence} from '../tables/ledger.js';
+import {historyEvidence} from '../engine/reply.mjs';
 
 test('automatic archive and manual history intake share completion and temporary status',async()=>{
  const f=await memoryFlow();for(let n=1;n<=3;n++)await f.accept(memoryReply(n));

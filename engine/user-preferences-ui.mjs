@@ -4,8 +4,9 @@ import {compilePrompts} from './config.mjs';
 import {materials} from './materials.mjs';
 import {Runtime} from './runtime.mjs';
 import {createTagRegistry,compileTagProjection,validateExtensionPack,preferenceExtensionPacks} from './tag-system.mjs';
+import {mainProposalRows} from './main-proposals.mjs';
 
-export function renderUserPreferences(document,area,{scope,config,editor,changed,draw,button,input,field,el,assistant,onStyleRules}){
+export function renderUserPreferences(document,area,{scope,config,editor,changed,draw,button,input,field,el,assistant,proposalReview=null,proposalRedraw=null,onStyleRules}){
  const own=()=>editor.rows;
  const all=()=>editor.rows;
  for(const [key,row]of Object.entries(config.playDefaults?.textOverrides??{}))if(!own()[key])own()[key]={...row,scope_type:row.scope_type??'global'};
@@ -52,4 +53,15 @@ export function renderUserPreferences(document,area,{scope,config,editor,changed
  for(const [key,record]of rows().filter(([,r])=>r.owner_type==='extension_pack')){const pack=JSON.parse(record.tag_config_json),row=el('div');row.append(el('p',pack.manifest.name+' · '+pack.manifest.version+' · '+(record.enabled?'启用':'停用')),button(record.enabled?'停用':'启用',()=>{put(key,{...record,enabled:!record.enabled,tag_config_json:JSON.stringify({...pack,enabled:!record.enabled})});draw();}),button('移除',()=>{delete own()[key];changed();draw();}));packs.append(row);}
  const banned=el('details');banned.append(el('summary','禁用词'),el('p','默认禁词与防套话规则继续启用；手动禁词叠加到同一规则表，并用于交付前真实扫描。'),button('添加／管理手动禁词',()=>onStyleRules?.()));
  panel.append(lists.pending,lists.enabled,lists.disabled,library,custom,packs,banned);area.append(panel);
+ const proposalRows=mainProposalRows(editor.database?.state,{pendingOnly:true}),review=el('details');review.dataset.preferenceSection='main-proposals';review.open=proposalRows.length>0;review.append(el('summary','主回复提案 · '+proposalRows.length+' 条待确认'),el('p','主 API 同一回复生成。采用前不进入偏好、标签或知识投影；打回后可由下一轮主回复或已分配的专项 API 重绘。'));
+ for(const proposal of proposalRows){
+  const row=el('details');row.dataset.mainProposal=proposal.recordId;row.append(el('summary',(proposal.name||proposal.target_ref||'未命名')+' · '+proposal.operation+' · '+(proposal.proposal_status==='redraw_pending'?'等待重绘':'待确认')));
+  const detail=Object.entries(proposal).filter(([key,value])=>!['proposal_status','source_key','source_hash','review_instruction','revision_count','original_values_json','adopted_target','tableId','recordId'].includes(key)&&value!==''&&value!=null&&!(Array.isArray(value)&&!value.length)).map(([key,value])=>key+'：'+(Array.isArray(value)?value.join('；'):String(value))).join('\n');row.append(el('pre',detail));
+  const correction=input(proposal.review_instruction??'',()=>{},{multi:true,rows:3});correction.setAttribute('aria-label','提案修正指令');row.append(field('打回修正指令',correction));
+  const act=async action=>{if(!proposalReview)throw Error('提案审核服务尚未接入');const result=await proposalReview({tableId:proposal.tableId,recordId:proposal.recordId,action,instruction:correction.value,contextKey:editor.database.contextKey,expectedRevision:editor.database.revision});editor.database=result;draw();};
+  row.append(button('采用并生效',()=>act('accept')),button('拒绝',()=>act('reject')),button('打回，等待重绘',()=>act('redraw')));
+  if(proposal.proposal_status==='redraw_pending')row.append(button('使用专项 API 重绘',async()=>{if(!proposalRedraw)throw Error('专项重绘服务尚未接入');const result=await proposalRedraw({tableId:proposal.tableId,recordId:proposal.recordId});editor.database=result;draw();}));
+  review.append(row);
+ }
+ if(!proposalRows.length)review.append(el('p','当前没有待确认的主回复提案。'));area.append(review);
 }

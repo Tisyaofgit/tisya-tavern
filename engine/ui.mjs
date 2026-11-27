@@ -132,7 +132,7 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   nav.append(routeButton('用户身份',onIdentity,true),routeButton('连接与模型',onNative,true),routeButton('外观',onAppearance,true),routeButton('返回',onClose,true));content.append(nav);
   const body=el('section',null,'tisya-sub-card');content.append(body);
   if(tab==='preferences'){
-   preferenceView=renderPreferences(document,body,{viewState:preferenceState,config,editor:preferenceDraft,assistant:service.preferenceDraft,download,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity,onStyleRules});content.scrollTop=scrollTop;
+   preferenceView=renderPreferences(document,body,{viewState:preferenceState,config,editor:preferenceDraft,assistant:service.preferenceDraft,proposalReview:service.reviewMainProposal,proposalRedraw:service.redrawMainProposal,download,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity,onStyleRules});content.scrollTop=scrollTop;
   }
   if(tab==='resources')resourceDraft=renderResources(document,body,{config,changed:()=>changed(),button,field,input,el,mediaAtlas:service.mediaAtlas??null});
   if(tab==='tags'){

@@ -1,4 +1,20 @@
-import {clone,digestAsync,sha256Async} from './common.mjs';
+import {clone,digestAsync,sha256Async,fail} from './common.mjs';
+
+// The durable workspace is a runtime projection, not a second journal backup.
+// Current state and render materials are sufficient for an evidence-matched
+// reopen; any replay, historical edit or CAS write must reattach the sole
+// authoritative bundle before doing work.
+export function compactRuntimeWorkspace(value){
+ const bundle=value?.bundle;if(!bundle?.journal)return value;
+ return {...value,bundle:{...bundle,journal:{...bundle.journal,entries:[]},workspace_short:'tisya.runtime-workspace/1'}};
+}
+export async function authoritativeWorkspace(storage,id,bundle){
+ if(!bundle?.workspace_short)return bundle;
+ if(bundle.workspace_short!=='tisya.runtime-workspace/1')fail('WORKSPACE_FORMAT','短工作区格式无法识别');
+ const authoritative=await storage.get(id);if(!authoritative?.state||!Array.isArray(authoritative.journal?.entries))fail('ENGINE_STATE_MISSING','短工作区对应的权威存档无法读取');
+ if((authoritative.local_revision??0)!==(bundle.local_revision??0))fail('SAVE_CONFLICT','短工作区与权威存档修订不一致');
+ return authoritative;
+}
 
 // Derived only: the authoritative store owns a small, transactionally written
 // workspace head. A matching head plus native evidence restores the complete
@@ -55,7 +71,7 @@ export function createFinalProjectionCache({storage,version='matrix-final-v3',on
  }
  async function coldProject(owner,input,inputKey,compute){
   const signature=await digestAsync({version,input}),hot=memory.get(owner);if(hot?.signature===signature){hot.inputKey=inputKey;hits++;return clone(hot.value);}
-  try{const row=await storage.get(key(owner));if((row?.format==='tisya.final-projection/2'||row?.format==='tisya.final-projection/3')&&row.version===version&&row.owner===owner&&row.signature===signature&&row.value){diskHits++;const value=restore?await restore(row.value,input):row.value,entry=remember(owner,inputKey,signature,value);if(row.format==='tisya.final-projection/3'&&row.workspace)entry.workspace={...row.workspace,key:workspaceKey(input)};return clone(value);}}catch(error){warn(error);}
+  try{const row=await storage.get(key(owner));if((row?.format==='tisya.final-projection/2'||row?.format==='tisya.final-projection/3')&&row.version===version&&row.owner===owner&&row.signature===signature&&row.value){diskHits++;const value=restore?await restore(row.value,input,owner):row.value,entry=remember(owner,inputKey,signature,value);if(row.format==='tisya.final-projection/3'&&row.workspace)entry.workspace={...row.workspace,key:workspaceKey(input)};return clone(value);}}catch(error){warn(error);}
   misses++;const value=await compute(),cached=clone(value),entry=remember(owner,inputKey,signature,cached);entry.input=null;unsaved.add(owner);schedulePersist();return value;
  }
  function project(owner,input,compute){
@@ -81,7 +97,7 @@ export function createFinalProjectionCache({storage,version='matrix-final-v3',on
    if(workspace?.revision===head.revision&&(workspace.token===null||workspace.token===head.token)&&workspace.key===evidenceKey){hits++;workspaceHits++;return clone(hot.value);}
    const evidenceSignature=await sha256Async(evidenceKey),row=await storage.get(key(owner));
    if(row?.format==='tisya.final-projection/3'&&row.version===version&&row.owner===owner&&row.value&&row.workspace?.revision===head.revision&&row.workspace?.token===head.token&&row.workspace?.evidenceSignature===evidenceSignature){
-    const value=restore?await restore(row.value,input):row.value,entry=remember(owner,null,row.signature,value);entry.workspace={revision:head.revision,token:head.token,key:evidenceKey,evidenceSignature};diskHits++;workspaceHits++;return clone(value);
+    const value=restore?await restore(row.value,input,owner):row.value,entry=remember(owner,null,row.signature,value);entry.workspace={revision:head.revision,token:head.token,key:evidenceKey,evidenceSignature};diskHits++;workspaceHits++;return clone(value);
    }
    dirty++;return null;
   }catch(error){warn(error);dirty++;return null;}

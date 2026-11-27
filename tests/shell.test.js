@@ -841,9 +841,12 @@ test('pending selection diagnostics remain reachable and show actual target mism
 
 
 test('complete inspection copies and exports one terminal safe display data runtime report',async()=>{
- const f=await setup(),d=f.w.document;let copied,file,filename;
+ const f=await setup({configureContext:async(_c,{window})=>{
+  const create=window.fixture.createTableService;window.fixture.createTableService=options=>{
+   const service=create(options);return Object.freeze({...service,state:()=>({busy:false,progress:{stage:'error',characters:19,text:'PRIVATE_FAILED_REPLY',responseDiagnostic:{httpStatus:200,done:true,finishReason:'length'}},jobs:[{task:'PRIVATE_TASK',status:'失败',detail:'PRIVATE_DETAIL',code:'CELL_FAILED',response:{text:'PRIVATE_JOB_REPLY'}}]})});
+  };
+ }}),d=f.w.document;let copied,file,filename;
  f.ctx.chat[0].mes='PRIVATE_CHAT_TEXT';
- f.w.tableService.state=()=>({busy:false,progress:{stage:'error',characters:19,text:'PRIVATE_FAILED_REPLY',responseDiagnostic:{httpStatus:200,done:true,finishReason:'length'}},jobs:[{task:'PRIVATE_TASK',status:'失败',detail:'PRIVATE_DETAIL',code:'CELL_FAILED',response:{text:'PRIVATE_JOB_REPLY'}}]});
  Object.defineProperty(f.w.navigator.clipboard,'writeText',{value:async text=>{copied=text;},configurable:true});
  const original=f.w.URL.createObjectURL,oldClick=f.w.HTMLAnchorElement.prototype.click;
  try{
@@ -908,9 +911,10 @@ test('a manually selected foreign preset passes native input through without eit
  }finally{await f.w.happyDOM.abort();}
 });
 
-test('native token-count dry runs do not clear pending one-pass storage work',async()=>{
- const f=await setup();let clears=0,discards=0,accepts=0;f.w.tableService.clear=()=>clears++;f.w.tableService.discardOnePass=()=>discards++;f.w.tableService.acceptOnePass=async()=>accepts++;
- await f.emit('before','normal',{},true);assert.equal(await f.w.tisyaHistoryInput([],100,()=>{},'normal'),null);await f.emit('generation-end');assert.equal(clears,0);assert.equal(discards,0);assert.equal(accepts,0);assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
+test('native token-count dry runs do not invoke retired storage work or settle Matrix',async()=>{
+ const f=await setup();let ends=0;const event=f.w.Tisya.matrix.event;f.w.Tisya.matrix.event=async(name,...args)=>{if(name==='GENERATION_ENDED')ends++;return event(name,...args);};
+ for(const name of ['clear','prepare','archiveFromMessages','acceptOnePass','discardOnePass'])assert.equal(typeof f.w.Tisya.tables[name],'undefined');
+ await f.emit('before','normal',{},true);assert.equal(await f.w.tisyaHistoryInput([],100,()=>{},'normal'),null);await f.emit('generation-end');assert.equal(ends,0);assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 
 test('token count between a real start and its end completes the Matrix lifecycle once without legacy settlement',async()=>{
@@ -1092,11 +1096,11 @@ test('cold-start identity omits retired origin recovery and preserves existing n
 test('explicit retired origin target cannot invoke the removed recovery adapter or write either data owner',async()=>{
  const f=await setupIdentityRoute(),d=f.w.document;
  try{
-  const ref={book:'旧原点书',originId:'origin-a',id:'person-a',rev:3},seen=[],before=await f.w.Tisya.matrix.readDatabase(),native=structuredClone(f.ctx.powerUserSettings);
-  f.w.tableService.previewIdentityOrigin=async value=>{seen.push(structuredClone(value));throw Error('retired origin adapter must remain unreachable');};
+  const ref={book:'旧原点书',originId:'origin-a',id:'person-a',rev:3},before=await f.w.Tisya.matrix.readDatabase(),native=structuredClone(f.ctx.powerUserSettings);
+  assert.equal(f.w.tableService.previewIdentityOrigin,undefined);
   f.w.requestedOrigin=ref;await f.w.eval('openIdentity(window.requestedOrigin)');await settleIdentityRoute(f);
   const page=d.querySelector('#tisya-user-page');assert(page.classList.contains('tisya-matrix-identity'));assert.equal(page.querySelector('.tisya-user'),null);
-  assert.deepEqual(seen,[]);assert.equal(page.querySelector('[data-legacy-origins]'),null);assert.equal(page.querySelector('[data-origin-reviewed]'),null);
+  assert.equal(f.w.tableService.previewIdentityOrigin,undefined);assert.equal(page.querySelector('[data-legacy-origins]'),null);assert.equal(page.querySelector('[data-origin-reviewed]'),null);
   assert.deepEqual(f.ctx.powerUserSettings,native);assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);assert.equal(f.bookWrites(),0);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{
   const page=d.querySelector('#tisya-user-page');if(page)await pressRouteButton(f,page,'取消修改');

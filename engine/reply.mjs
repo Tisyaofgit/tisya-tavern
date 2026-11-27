@@ -5,6 +5,7 @@ import {xmlTokens} from '../reader-core.js';
 import {groupedExtraSlots} from '../native-mvu-wire.js';
 import {prepareMatrixSheets,acceptMatrixSheets,applyMatrixChanges,matrixInputLine} from '../tables/foundation/engine.js';
 import {stageArchive,formalizeArchives} from './archive.mjs';
+import {stageMainProposals} from './main-proposals.mjs';
 import {assertReplyFormOwnership,replyFormDecoding,assertReplyFormVersion,REPLY_FORM_OWNERSHIP_VERSION,LEGACY_REPLY_FORM_OWNERSHIP_VERSION} from './reply-form-ownership.mjs';
 import {programOwnedTable,creationFieldAllowed} from './prompt-boundary.mjs';
 import {isFieldHistoryRecord} from './field-history.mjs';
@@ -16,12 +17,23 @@ export function paragraphs(body){
  const bounds=[...cuts].sort((a,b)=>a-b),fragments=[],mapping=[];let pending='';for(let i=0;i<bounds.length-1;i++){let a=bounds[i],b=bounds[i+1],raw=body.slice(a,b);if(!raw.trim()){if(fragments.length){fragments.at(-1).raw_block+=raw;fragments.at(-1).source_end=b;}else pending+=raw;continue;}if(pending){raw=pending+raw;a-=pending.length;pending='';}const clean=raw.trim(),m=mark.exec(clean),label=m?.slice(1).find(v=>v!==undefined)??null,n=fragments.length+1;fragments.push({paragraph_id:'P'+n,chunk_index:n,raw_block:raw,chunk_text:m?clean.slice(m[0].length):clean,source_start:a,source_end:b,original_label:label});mapping.push({normalized:'P'+n,original_label:label,source_start:a,source_end:b});}
  fragments.forEach(f=>f.sha256=sha256(f.raw_block));return {fragments,normalized:fragments.map((f,i)=>(i+1)+' '+f.chunk_text).join('\n\n'),mapping,warnings:valid?[]:[{code:'PARAGRAPH_NORMALIZED',message:'连续段号已在读取投影中归一，原文及映射保留',mapping}]};
 }
+function withoutAuxiliary(text){
+ let prose=String(text??'').replace(/<(?:task|next|status|memory|vars|extra|actions|archive|cells|anchor|title|think|thinking|analysis|UpdateVariable|JSONPatch)\b[^>]*\/\s*>/gi,'');
+ const auxiliary=/<(task|next|status|memory|vars|extra|actions|archive|cells|anchor|title|think|thinking|analysis|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
+ let prior;do{prior=prose;prose=prose.replace(auxiliary,'');}while(prior!==prose);
+ return prose;
+}
+export function archivalText(text){
+ text=String(text??'');const body=text.match(/<body(?:\s[^>]*)?>([\s\S]*?)<\/body>/i);
+ return withoutAuxiliary(body?body[1]:text).replace(/<\/?reply(?:\s[^>]*)?>/gi,'').trim();
+}
+export function historyEvidence(text){return withoutAuxiliary(text).replace(/<\/?(?:reply|body)(?:\s[^>]*)?>/gi,'').trim();}
 export function envelope(raw){
  const text=groupedExtraSlots(normalizeEnvelope(raw),xmlTokens,envelopeTags(raw)??undefined),blocks={},attrs={},stack=[];let slot=null,end=null;
  for(const t of xmlTokens(text,{literalAmpersands:true,rawVarsJSON:true})){
   if(t.kind==='open'){
    if(!stack.length){if(t.name!=='reply'||t.selfClose||end!==null)fail('REPLY_ROOT','需要完整回复外壳');}
-   else if(stack.length===1){const tag=t.name.toLowerCase(),key=tag==='anchor'?t.attrs.phase:tag;if(!['task','before','after','title','body','extra','cells','vars','archive','actions'].includes(key))fail('REPLY_BLOCK','未知回复区块',{tag});if(Object.hasOwn(blocks,key))fail('REPLY_DUPLICATE_BLOCK','回复区块重复',{block:key});blocks[key]='';attrs[key]=t.attrs;slot=t.selfClose?null:{key,start:t.end};}
+   else if(stack.length===1){const tag=t.name.toLowerCase(),key=tag==='anchor'?t.attrs.phase:tag;if(!['task','before','after','title','body','extra','cells','vars','archive','proposals','actions'].includes(key))fail('REPLY_BLOCK','未知回复区块',{tag});if(Object.hasOwn(blocks,key))fail('REPLY_DUPLICATE_BLOCK','回复区块重复',{block:key});blocks[key]='';attrs[key]=t.attrs;slot=t.selfClose?null:{key,start:t.end};}
    if(!t.selfClose)stack.push(t.name);
   }else if(t.kind==='close'){
    if(stack.at(-1)!==t.name)fail('REPLY_BLOCK','回复区块未正确闭合',{tag:t.name});if(stack.length===2&&slot){blocks[slot.key]=text.slice(slot.start,t.start);slot=null;}stack.pop();if(!stack.length){end=t.end;break;}
@@ -32,7 +44,7 @@ export function envelope(raw){
 }
 export function parseReply(raw,entryId,revision=1,{multipleEvidence=true}={}){
  const e=envelope(raw),p=paragraphs(e.blocks.body),original=(e.blocks.cells??'').split(/\r?\n/).map(s=>s.trim()).filter(s=>s&&!/^(#|\/\/)/.test(s)),ops=[],warnings=[...p.warnings];original.forEach((line,i)=>{const m=paragraphEvidence(line,multipleEvidence);if(m){const ns=[...m[1].matchAll(/P?(\d+)/g)].map(x=>Number(x[1])),clamped=ns.map(n=>Math.min(Math.max(1,n),p.fragments.length));if(ns.some((n,j)=>n!==clamped[j])){const fixed=multipleEvidence?m[1].replace(/(P?)(\d+)/g,(_,prefix,n)=>prefix+Math.min(Math.max(1,Number(n)),p.fragments.length)):clamped.map(n=>'P'+n).join('..');warnings.push({code:'PARAGRAPH_CLAMPED',line_number:i+1,original_reference:m[1],effective_reference:fixed,message:'仅修正引用段号，未增加事实证据'});line=line.slice(0,m.index)+m[0].replace(m[1],fixed);}}ops.push(line);});
- return {entry_id:entryId,revision,reply_raw:raw,reply_sha256:sha256(raw),body_raw:e.blocks.body,body_sha256:sha256(e.blocks.body),body_normalized:p.normalized,normalized_sha256:sha256(p.normalized),paragraph_mapping:p.mapping,fragments:p.fragments,delta_ops:ops,original_delta_ops:original,cells_raw:e.blocks.cells??'',cells_format:e.attrs.cells?.format??'delta',warnings,archive_present:Object.hasOwn(e.blocks,'archive'),archive_raw:e.blocks.archive??'',archive_format:e.attrs.archive?.format??'',archive_rows:(e.blocks.archive??'').split(/\r?\n/).filter(s=>s.trim()).map(raw=>({raw})),title:e.blocks.title??'',actions:e.blocks.actions??'',anchors:{before:e.blocks.before??'',after:e.blocks.after??''},native_vars:e.blocks.vars??''};
+ return {entry_id:entryId,revision,reply_raw:raw,reply_sha256:sha256(raw),body_raw:e.blocks.body,body_sha256:sha256(e.blocks.body),body_normalized:p.normalized,normalized_sha256:sha256(p.normalized),paragraph_mapping:p.mapping,fragments:p.fragments,delta_ops:ops,original_delta_ops:original,cells_raw:e.blocks.cells??'',cells_format:e.attrs.cells?.format??'delta',warnings,archive_present:Object.hasOwn(e.blocks,'archive'),archive_raw:e.blocks.archive??'',archive_format:e.attrs.archive?.format??'',archive_rows:(e.blocks.archive??'').split(/\r?\n/).filter(s=>s.trim()).map(raw=>({raw})),proposals_present:Object.hasOwn(e.blocks,'proposals'),proposals_raw:e.blocks.proposals??'',proposals_format:e.attrs.proposals?.format??'',proposal_rows:(e.blocks.proposals??'').split(/\r?\n/).filter(s=>s.trim()).map(raw=>({raw})),title:e.blocks.title??'',actions:e.blocks.actions??'',anchors:{before:e.blocks.before??'',after:e.blocks.after??''},native_vars:e.blocks.vars??''};
 }
 function changedBusinessRecords(beforeTables,state){
  const changes=[];
@@ -83,7 +95,8 @@ export function acceptReply(e,raw,entryId,revision=1,branch='main',{formOwnershi
   if(beforeTables)assertReplyFormOwnership({schema:e.data.schema,tables:beforeTables},changedBusinessRecords(beforeTables,e.data),'cells',{version:formOwnershipVersion});
   return value;
  });}catch(x){result={status:'FAILED',error:asError(x)};}operations.push({line_number:i+1,original:parsed.original_delta_ops[i],effective:line,...result});const data=(result.receipt??result).result;if(data?.warning)warnings.push({...data.warning,line_number:i+1});if(result.status==='FAILED')warnings.push({code:'CELL_FAILED',line_number:i+1,original:parsed.original_delta_ops[i],error:result.error,message:'本行已回滚，正文和其他成功行保留'});});
+ const proposals=e.transaction(operation+':proposals',{raw:parsed.proposals_raw,reply_sha256:parsed.reply_sha256},()=>stageMainProposals(e,sourceKey));const proposalResult=proposals.status==='FAILED'?{changes:0,warnings:[{code:'PROPOSAL_COMMIT',message:'提案事务失败，原文保留',error:proposals.error}]}:(proposals.receipt??proposals).result;warnings.push(...(proposalResult?.warnings??[]));
  warnings.push(...stageArchive(e,sourceKey));const archive=formalizeArchives(e,{confirmedSource:manualConfirmed?sourceKey:null});warnings.push(...archive.warnings);
- return e.transaction(operation,request,()=>{e.data.runtime.warnings??=[];e.data.runtime.warnings.push(...warnings.map(x=>({...x,source_key:x.source_key??sourceKey})));e.data.runtime.sources[sourceKey].settlement={operations:clone(operations),warnings:clone(warnings)};return {source_key:sourceKey,body_sha256:parsed.body_sha256,normalized_sha256:parsed.normalized_sha256,paragraphs:parsed.fragments.length,operations,warnings,formalized_sources:archive.formalized_sources,staged_rows:parsed.archive_rows.length};});
+ return e.transaction(operation,request,()=>{e.data.runtime.warnings??=[];e.data.runtime.warnings.push(...warnings.map(x=>({...x,source_key:x.source_key??sourceKey})));e.data.runtime.sources[sourceKey].settlement={operations:clone(operations),proposals:clone(proposalResult),warnings:clone(warnings)};return {source_key:sourceKey,body_sha256:parsed.body_sha256,normalized_sha256:parsed.normalized_sha256,paragraphs:parsed.fragments.length,operations,warnings,formalized_sources:archive.formalized_sources,staged_rows:parsed.archive_rows.length,proposal_rows:proposalResult?.changes??0};});
 }
 export function recall(e,query,{paragraphs:chosen,branch}={}){const terms=query.split(/[\s/,，；;]+/).filter(Boolean),out=[];for(const [key,s]of Object.entries(e.data.runtime.sources)){if(branch&&s.branch!==branch)continue;if(sha256(s.body_raw)!==s.body_sha256)fail('SOURCE_INTEGRITY','存储的原文发生变化',{source_key:key});const trigger=s.archive_rows.map(r=>r.raw).join(' '),hits=terms.filter(t=>s.body_raw.includes(t)||trigger.includes(t));if(terms.length&&!hits.length)continue;const fragments=s.fragments.filter(f=>!chosen||chosen.includes(f.paragraph_id));for(const f of fragments)if(sha256(f.raw_block)!==f.sha256)fail('SOURCE_INTEGRITY','存储的段落发生变化',{source_key:key,paragraph:f.paragraph_id});out.push({source_key:key,entry_id:s.entry_id,revision:s.revision,body_sha256:s.body_sha256,matched_terms:hits,fragments:clone(fragments)});}return out;}

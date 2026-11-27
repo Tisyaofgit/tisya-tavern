@@ -1,4 +1,5 @@
 import {sha256,fail,digest,digestAsync,stable} from './common.mjs';
+import {openDatabase,transact as idbTransact} from './idb-framework.mjs';
 /* Host adapter independent of DOM. Event payload numbers are hints, never identities. */
 export const NS='tisya_engine';
 export const PROMPT_KEY='tisya_engine_materials';
@@ -318,11 +319,11 @@ export class Controller{
 }
 
 export function indexedStorage(indexedDB){
-    const db=new Promise((resolve,reject)=>{const r=indexedDB.open('tisya-engine-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('chats');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+    const db=openDatabase({indexedDB,name:'tisya-engine-v1',version:1,label:'引擎工作区',schema:database=>{if(!database.objectStoreNames.contains('chats'))database.createObjectStore('chats');}});
     const headKey=key=>'workspace:head:'+key,isBundle=value=>!!value?.state?.schema&&!!value?.state?.tables,committedTokens=new WeakMap();
     const head=(key,value)=>({format:'tisya.workspace-head/1',owner:key,revision:value.local_revision??0,token:makeUid()});
-    async function transact(mode,fn){const d=await db;return new Promise((resolve,reject)=>{const tx=d.transaction('chats',mode),s=tx.objectStore('chats');let value;const r=fn(s);r.onsuccess=()=>{value=r.result;};r.onerror=()=>reject(r.error);tx.oncomplete=()=>resolve(value);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??Error('本地保存已中断'));});}
-    async function set(key,value){const d=await db,nextHead=isBundle(value)?head(key,value):null;return new Promise((resolve,reject)=>{const tx=d.transaction('chats','readwrite'),s=tx.objectStore('chats');s.put(value,key);if(nextHead)s.put(nextHead,headKey(key));tx.oncomplete=()=>{if(nextHead)committedTokens.set(value,nextHead.token);resolve(value);};tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??Error('本地保存已中断'));});}
+    async function transact(mode,fn){return idbTransact(await db,'chats',mode,(store,set)=>{const request=fn(store);request.onsuccess=()=>set(request.result);},{label:'引擎工作区'});}
+    async function set(key,value){const nextHead=isBundle(value)?head(key,value):null;await idbTransact(await db,'chats','readwrite',store=>{store.put(value,key);if(nextHead)store.put(nextHead,headKey(key));},{label:'引擎工作区'});if(nextHead)committedTokens.set(value,nextHead.token);return value;}
     async function commit(key,expected,value){
         const d=await db;
         return new Promise((resolve,reject)=>{

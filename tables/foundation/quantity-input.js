@@ -42,6 +42,7 @@ function chineseInteger(text){
 export function parseQuantityNumber(raw){
  if(typeof raw!=='string'&&typeof raw!=='number')return null;
  let text=String(raw).trim().replace(/[０-９]/g,char=>String(char.charCodeAt(0)-0xfee0)).replace(/\s+/g,'');
+ if(text==='半')return 0.5;
  let sign=1;const prefix=/^([+\-]|正|负|負)/.exec(text);if(prefix){sign=['-','负','負'].includes(prefix[1])?-1:1;text=text.slice(prefix[0].length);}
  if(!text)return null;
  const parts=text.split(/[点點.]/);if(parts.length>2||parts.some(part=>!part))return null;
@@ -56,7 +57,7 @@ export function parseQuantityShorthand(raw){
  const text=raw.trim(),annotation=/^(.*?)\s*(?:（[^（）\r\n]+）|\([^()\r\n]+\))$/.exec(text);let core=(annotation?annotation[1]:text).trim(),narrativeOnly=!!annotation;
  const prefix=/^(约|大约|大概|近|将近|將近|不足|不到|未满|未滿|超过|超過|逾)\s*/.exec(core);if(prefix){narrativeOnly=true;core=core.slice(prefix[0].length);}
  const suffix=/(左右|上下|前后|前後|开外|開外|出头|出頭|以上|以下)$/.exec(core);if(suffix){narrativeOnly=true;core=core.slice(0,-suffix[0].length).trim();}
- const match=new RegExp('^([+\\-正負负]?['+numericChars+']+)\\s*([^\\s：:；;（）()]+)$').exec(core);if(!match)return null;
+ const match=new RegExp('^((?:[+\\-正負负]?['+numericChars+']+)|半)\\s*([^\\s：:；;（）()]+)$').exec(core);if(!match)return null;
  const value=parseQuantityNumber(match[1]);let unit=match[2];const infix=/^(余|多|来|來)/.exec(unit);if(infix){narrativeOnly=true;unit=unit.slice(infix[0].length);}const approximate=/(余|多|来|來)$/.exec(unit);if(approximate){narrativeOnly=true;unit=unit.slice(0,-approximate[0].length);}
  if(value===null||!unit)return null;
  return {text,value,unit,narrativeOnly};

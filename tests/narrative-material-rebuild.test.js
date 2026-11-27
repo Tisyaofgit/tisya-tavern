@@ -111,13 +111,14 @@ test('recall returns only the approved matching paragraph from a selected source
  const key='main/old@1';
  e.data.runtime.sources[key]=source;
  e.data.runtime.archive_queue.push({status:'formal',source_key:key});
- e.newRecord('T_DYN_EVENTS',{title:'交接'},'event');
+ e.newRecord('T_DYN_EVENTS',{title:'交接',short_code:'07',timeline_domain:'渡口主线',time_original_text:'雪夜'},'event');
  e.record('T_DYN_EVENTS','event').metadata.archive_source={source_key:key,entry_id:'old',revision:1,body_sha256:source.body_sha256,paragraphs:['P1']};
  const history={window:{sourceIds:[]},recentSituation:{currentUser:{text:'青鹭三叩。当时说了什么？'}}};
  const message={id:'old',role:'assistant',floor:2,text:reply};
  const result=recallNarrativePassages(e.data,scope,history,[message]);
- assert.match(result,/第 2 层 P1/);
+ assert.match(result,/e07〈渡口主线〉\[雪夜\] 第 2 层 P1/);
  assert.match(result,/青鹭三叩是暗号/);
+ assert.match(recallNarrativePassages(e.data,scope,{...history,recentSituation:{currentUser:{text:'雪夜那段当时说了什么？'}}},[message]),/统一时间轴召回/);
  assert.doesNotMatch(result,/第二段|第 2 层 P2/);
  assert.equal(recallNarrativePassages(e.data,{branch_ref:'fork'},history,[message]),'');
  assert.equal(recallNarrativePassages(e.data,scope,{...history,window:{sourceIds:['old']}},[message]),'');

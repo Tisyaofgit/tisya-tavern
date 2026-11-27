@@ -399,7 +399,7 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
   const openKeys=new Set(fields.map(f=>f.key));
   const unavailableLabels=snapshot.state.schema[id].fields.filter(f=>!openKeys.has(f.key))
    .flatMap(f=>[f.label??f.key,fieldLabels.get(f.key)].filter(Boolean));
-  const t={id,table:id,label:labels.get(id),unavailableLabels,fields:fields.map(f=>({key:f.key,label:fieldLabels.get(f.key),row:f.row,path:[f.key],group:'内容',definition:{type:'text'},formStructured:['JSON','ARRAY','OBJECT'].includes(f.type)}))};templates.push(t);schemaByTemplate[id]=schema;
+  const t={id,table:id,label:labels.get(id),unavailableLabels,fields:fields.map(f=>({key:f.key,label:fieldLabels.get(f.key),row:f.row,path:[f.key],group:'内容',definition:{type:'text',...(f.type==='LONG_TEXT'?{multiline:true}:{})},formStructured:['JSON','ARRAY','OBJECT'].includes(f.type)}))};templates.push(t);schemaByTemplate[id]=schema;
  }
  const referenceTables=new Set(templates.map(t=>t.id));for(const schema of Object.values(schemaByTemplate))for(const f of schema.fields)if(allSchemas[f.ref])referenceTables.add(f.ref);
  for(const [id,schema]of Object.entries(schemaByTemplate))for(const field of schema.fields){const targets=phoneFormReference(id,field.key)??PHONE_FORM_LIST_REFERENCES[id]?.[field.key];for(const target of [targets].flat().filter(Boolean))if(allSchemas[target])referenceTables.add(target);}
@@ -633,6 +633,13 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   let unique=[...new Map(matches.map(r=>[r.tableId+'#'+r.recordId,r])).values()];
   if(context.commonUnits!==false&&target==='M_UNITS'&&unique.length>1&&unique.every(r=>r.name===raw)){const local=unique.filter(r=>unitValues(r).scope_world_id===unitScope());if(local.length)unique=local;}
   if(unique.length===1)return unique[0];
+  // A bare group ordinal is unambiguous only inside this reply and only when
+  // the field already declares its target table. Never reinterpret names,
+  // stored IDs, event codes or cross-table numbers as local group references.
+  if(!unique.length&&/^[1-9]\d*$/.test(String(raw).trim())&&targets.length===1){
+   const local=rows.filter(row=>row.tableId===targets[0]&&row.heading===((snapshot.state.schema[row.tableId]?.label??row.tableId)+'／'+String(raw).trim()));
+   if(local.length===1)return local[0];
+  }
   if(context.commonUnits!==false&&!unique.length&&target==='M_UNITS'&&source){const unit=registerCommonUnit(source.row,raw,source.field);if(unit)return unit;}
   if(!unique.length&&permitsIdentityReuse(context.task)&&targets.length===1&&FIRST_MENTION_TABLES.has(targets[0])&&source){
    const tableId=targets[0],schema=snapshot.state.schema[tableId];

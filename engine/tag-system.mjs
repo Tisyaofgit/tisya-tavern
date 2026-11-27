@@ -8,22 +8,23 @@ const parse=(v,fallback={})=>{if(v&&typeof v==='object')return v;try{return JSON
 const text=v=>typeof v==='string'?v.trim():'';
 const renderText=v=>typeof v==='string'?v:Array.isArray(v)?v.map(renderText).join('\n'):v&&typeof v==='object'?Object.entries(v).map(([k,x])=>k+'：'+renderText(x)).join('\n'):String(v??'');
 const preferenceStrength=v=>typeof v==='string'?({禁止:0,偏好:1,喜爱:2,必须:3}[v]??2):Math.min(3,Math.max(0,Number(v??2)||0));
-export function validateExtensionPack(pack,{allowDisabled=false}={}){
+export function validateExtensionPack(pack,{allowDisabled=false,registry=null}={}){
  const errors=[];if(!pack||typeof pack!=='object')return ['扩展包必须是对象'];
  const m=pack.manifest??{};for(const k of ['package','name','version','schema_version','namespace'])if(m[k]==null||m[k]==='')errors.push('manifest.'+k+' 缺失');
  for(const type of ['poles','axes',...RESOURCE_TYPES,'tags'])if(!Array.isArray(pack[type]))errors.push(type+' 必须是数组');
  if(errors.length)return errors;
  const all=['poles','axes',...RESOURCE_TYPES,'tags'].flatMap(t=>pack[t]),ids=new Set();
  for(const x of all){if(!x?.id)errors.push('资源缺少 id');else if(ids.has(x.id))errors.push('重复 ID：'+x.id);else ids.add(x.id);}
- const resources=new Set(RESOURCE_TYPES.flatMap(t=>pack[t].map(x=>x.id)));
- for(const a of pack.axes)for(const id of a.poles??[])if(!pack.poles.some(p=>p.id===id))errors.push(a.id+' 引用不存在的极点 '+id);
+ const resources=new Set([...RESOURCE_TYPES.flatMap(t=>pack[t].map(x=>x.id)),...RESOURCE_TYPES.flatMap(t=>[...(registry?.[t]?.keys()??[])])]);
+ const poles=new Set([...pack.poles.map(x=>x.id),...(registry?.poles?.keys()??[])]);
+ for(const a of pack.axes)for(const id of [...(a.poles??[]),a.x?.negative,a.x?.positive,a.y?.negative,a.y?.positive].filter(Boolean))if(!poles.has(id))errors.push(a.id+' 引用不存在的极点 '+id);
  for(const t of pack.tags){if(!t.label)errors.push(t.id+' 缺少名称');for(const o of t.owners??[])if(!OWNER_TYPES.has(o))errors.push(t.id+' 归属无效');for(const s of t.scopes??[])if(!SCOPE_TYPES.has(s))errors.push(t.id+' 作用域无效');for(const type of RESOURCE_TYPES)for(const id of t.resources?.[type]??[])if(!resources.has(id))errors.push(t.id+' 引用不存在的资源 '+id);}
  return errors;
 }
 export function createTagRegistry(packs=[]){
  const registry={poles:new Map(),axes:new Map(),corpora:new Map(),techniques:new Map(),chains:new Map(),tags:new Map(),packs:[]};
- const add=pack=>{for(const type of ['poles','axes',...RESOURCE_TYPES,'tags'])for(const x of pack[type]??[]){if(registry[type].has(x.id))throw Error('重复标签资源 ID：'+x.id);registry[type].set(x.id,x);}registry.packs.push(pack.manifest);};
- add(BUILTIN);for(const pack of packs){if(pack?.enabled!==true)continue;const errors=validateExtensionPack(pack);if(errors.length)throw Error(errors.join('\n'));add(pack);}return registry;
+ const add=pack=>{const overlay=pack.manifest?.merge_mode==='overlay';for(const type of ['poles','axes',...RESOURCE_TYPES,'tags'])for(const x of pack[type]??[]){if(!overlay&&registry[type].has(x.id))throw Error('重复标签资源 ID：'+x.id);registry[type].set(x.id,x);}registry.packs.push(pack.manifest);};
+ add(BUILTIN);for(const pack of packs){if(pack?.enabled!==true)continue;const errors=validateExtensionPack(pack,{registry:pack.manifest?.merge_mode==='overlay'?registry:null});if(errors.length)throw Error(errors.join('\n'));add(pack);}return registry;
 }
 export function characterCoordinates(row,{readingOffset={}}={}){
  const base=parse(row?.values?.persona_coordinates_json),growth=parse(row?.values?.coordinate_growth_json),offset=readingOffset??{},out={};
@@ -36,8 +37,8 @@ export function coordinateMatch(trigger,coordinates){
  const min=Math.max(1,Number(trigger.min_known_axes)||1),score=weight?sum/weight:0;
  return {matched:known>=min&&score>=.25,score,known,total:keys.length,confidence:keys.length?known/keys.length:0};
 }
-function tagPreferenceRows(state,globalRows={}){return [...Object.values(globalRows??{}),...Object.values(state?.tables?.T_PREF_SCOPES??{}).map(r=>({...r.values,id:r.values.id}))].filter(v=>v.group==='USER'&&v.enabled!==false&&v.confirmation_state!=='pending'&&text(v.tag_id));}
-export function preferenceExtensionPacks(state,globalRows={}){return [...Object.values(globalRows??{}),...Object.values(state?.tables?.T_PREF_SCOPES??{}).map(r=>r.values)].filter(v=>v.owner_type==='extension_pack'&&v.enabled!==false).map(v=>({...parse(v.tag_config_json),enabled:true})).filter(v=>v.manifest);}
+function tagPreferenceRows(state,globalRows={}){return [...Object.values(globalRows??{}),...Object.values(state?.tables?.T_PREF_SCOPES??{}).map(r=>({...r.values,id:r.values.id}))].filter(v=>(v.group??'USER')==='USER'&&v.enabled!==false&&!['pending','用户确认候选'].includes(v.confirmation_state)&&text(v.tag_id));}
+export function preferenceExtensionPacks(state,globalRows={}){return [...Object.values(globalRows??{}),...Object.values(state?.tables?.T_PREF_SCOPES??{}).map(r=>r.values)].filter(v=>v.owner_type==='extension_pack'&&v.enabled!==false&&v.confirmation_state!=='pending'&&v.confirmation_state!=='用户确认候选').map(v=>({...parse(v.tag_config_json),enabled:true})).filter(v=>v.manifest);}
 export function preferenceProjectionTier(state,globalRows={},fallback='full'){const rows=[...Object.values(globalRows??{}),...Object.values(state?.tables?.T_PREF_SCOPES??{}).map(r=>r.values)].filter(v=>v.owner_type==='projection_setting'&&v.enabled!==false);return rows.at(-1)?.projection_tier||parse(rows.at(-1)?.tag_config_json).tier||fallback;}
 export function readingOffsets(state,globalRows={}){const out={};for(const r of tagPreferenceRows(state,globalRows)){if(r.owner_type!=='user')continue;const c=parse(r.tag_config_json);if(c.reading_offset)for(const [k,v]of Object.entries(c.reading_offset))out[k]=(out[k]||0)+(Number(v)||0);}return out;}
 function scopeMatches(row,worldId){const scope=row.scope_type||'global';if(scope==='global'||scope==='story')return true;if(scope==='scene')return !worldId||!row.subject_ref||row.subject_ref===worldId;return true;}
